@@ -5,7 +5,7 @@
     "categoria": "calor",
     "preco": 89.90,
     "descricao": "Conjunto de alcinha e short em xadrez azul lavanda com estrelinhas rosa, leve como uma noite de céu limpo.",
-    "imagem": "img/produtos/pijama-estrelas-xadrez.jpg"
+    "imagem": "img/produtos/ALCINHA1.jpg"
   },
   {
     "id": "pijama-canela-aconchego",
@@ -13,7 +13,7 @@
     "categoria": "calor",
     "preco": 94.90,
     "descricao": "Regata e short canelados em caramelo, com acabamento cru — simples, macio e confortável pra qualquer noite quente.",
-    "imagem": "img/produtos/pijama-canela-aconchego.jpg"
+    "imagem": "img/produtos/AMERICANO1.jpg"
   },
   {
     "id": "pijama-jardim-encantado",
@@ -21,7 +21,7 @@
     "categoria": "frio",
     "preco": 119.90,
     "descricao": "Camiseta manga curta e calça comprida com estampa de florzinhas coloridas — a calça extra mantém o pé quentinho nas noites mais frias.",
-    "imagem": "img/produtos/pijama-jardim-encantado.jpg"
+    "imagem": "img/produtos/DECALCA1.jpg"
   },
   {
     "id": "pijama-laco-de-lua",
@@ -29,7 +29,7 @@
     "categoria": "calor",
     "preco": 109.90,
     "descricao": "Camisa de botão e short com estampa de laçinhos pretos sobre fundo claro — um clássico atemporal pra dormir com estilo.",
-    "imagem": "img/produtos/pijama-laco-de-lua.jpg"
+    "imagem": "img/produtos/SIMPLES1.jpg"
   },
   {
     "id": "camisola-limonada",
@@ -37,7 +37,7 @@
     "categoria": "calor",
     "preco": 79.90,
     "descricao": "Camisola de alcinha rosa com estampa de limões, fresquinha e leve — perfeita pras noites mais quentes.",
-    "imagem": "img/produtos/camisola-limonada.jpg"
+    "imagem": "img/produtos/CAMISOLA1.jpg"
   },
   {
     "id": "pijama-poa-dos-sonhos",
@@ -45,6 +45,6 @@
     "categoria": "calor",
     "preco": 89.90,
     "descricao": "Regata e short lilás de poá branco, com detalhes em rosa — doce e confortável como um cochilo de tarde.",
-    "imagem": "img/produtos/pijama-poa-dos-sonhos.jpg"
+    "imagem": "img/produtos/PRODUTO1.1.png"
   }
 ]
