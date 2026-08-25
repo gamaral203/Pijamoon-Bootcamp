@@ -34,7 +34,7 @@ Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lig
 - **Identidade visual definida:** logo/hero real já enviado por Gabriel — ilustração de uma lua crescente com rosto dormindo sobre nuvens, estrelas douradas, pantufas, máscara de dormir e xícara de chocolate quente. Clima aconchegante/noturno/sonhador.
   - Paleta aproximada: azul lavanda `#9AAFCC`–`#B8C7E0` (céu), dourado/creme `#E8C878`–`#F0D9A0` (estrelas/lua), branco `#F5F5F2` (nuvens), azul petróleo escuro `#3B5478` (logotipo/texto).
   - Tipografia: serifada elegante no logotipo (estilo Playfair Display/Cormorant); sem serifa simples no resto do site.
-- **Git:** commits frequentes a cada etapa relevante (não um commit único no final). Repositório remoto no GitHub só será criado/pushado com confirmação explícita do Gabriel.
+- **Git:** commits frequentes a cada etapa relevante (não um commit único no final), seguindo Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, etc.). Branch principal: `main`. Repositório remoto: https://github.com/gamaral203/Pijamoon-Bootcamp (conectado e com push em 25/08/2026).
 
 ## Modo de trabalho (importante) — ATUALIZADO 25/08
 
