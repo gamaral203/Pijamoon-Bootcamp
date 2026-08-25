@@ -1,0 +1,13 @@
+{
+  "name": "pijamoon",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Loja Pijamoon - Desafio Bootcamp Minha Loja no Ar",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
