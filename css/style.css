@@ -5,9 +5,14 @@
   --dourado-claro: #F0D9A0;
   --branco-nuvem: #F5F5F2;
   --azul-petroleo: #3B5478;
+  --azul-petroleo-escuro: #2C405D;
 
   --fonte-logo: "Playfair Display", Georgia, serif;
   --fonte-corpo: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --raio: 16px;
+  --sombra: 0 4px 14px rgba(59, 84, 120, 0.12);
+  --sombra-hover: 0 10px 24px rgba(59, 84, 120, 0.2);
 }
 
 * {
@@ -24,23 +29,30 @@ body {
 /* Cabeçalho */
 
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(180deg, var(--azul-lavanda-claro), var(--branco-nuvem));
+  padding: 0.85rem 1.5rem;
+  background: rgba(184, 199, 224, 0.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(59, 84, 120, 0.12);
 }
 
 .logo-img {
-  height: 56px;
+  height: 48px;
   display: block;
 }
 
 .site-header nav a {
-  color: var(--azul-petroleo);
+  color: var(--azul-petroleo-escuro);
   text-decoration: none;
   font-weight: 600;
+  padding-bottom: 2px;
   border-bottom: 2px solid transparent;
+  transition: border-color 0.15s ease;
 }
 
 .site-header nav a:hover,
@@ -48,24 +60,33 @@ body {
   border-bottom-color: var(--dourado);
 }
 
-/* Hero */
+/* Hero: céu noturno decorativo, só com CSS */
 
 .hero {
+  position: relative;
   text-align: center;
-  padding: 2.5rem 1.5rem 2rem;
+  padding: 3rem 1.5rem 2.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(2px 2px at 15% 30%, var(--dourado) 0%, transparent 60%),
+    radial-gradient(2px 2px at 80% 20%, var(--dourado) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 60% 60%, var(--dourado-claro) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 30% 75%, var(--dourado-claro) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 90% 65%, var(--dourado) 0%, transparent 60%),
+    linear-gradient(180deg, var(--azul-lavanda-claro), var(--branco-nuvem));
 }
 
 .hero h1 {
   font-family: var(--fonte-logo);
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   margin: 0 0 0.5rem;
-  color: var(--azul-petroleo);
+  color: var(--azul-petroleo-escuro);
 }
 
 .hero p {
   margin: 0;
   color: var(--azul-petroleo);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 /* Controles de busca/filtro */
@@ -80,14 +101,14 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin: 2rem 0 0.5rem;
 }
 
 .controls input,
 .controls select {
   font-family: var(--fonte-corpo);
   font-size: 1rem;
-  padding: 0.6rem 1rem;
+  padding: 0.65rem 1rem;
   border: 1px solid var(--azul-lavanda);
   border-radius: 999px;
   background: white;
@@ -97,6 +118,15 @@ body {
 .controls input {
   flex: 1;
   min-width: 200px;
+  padding-left: 2.4rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B5478' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0.9rem center;
+  background-size: 16px;
+}
+
+.controls select {
+  cursor: pointer;
 }
 
 .controls input:focus,
@@ -105,11 +135,16 @@ body {
   outline-offset: 1px;
 }
 
+.controls input::placeholder {
+  color: var(--azul-petroleo);
+  opacity: 0.5;
+}
+
 #status {
   min-height: 1.2em;
-  font-size: 0.9rem;
-  opacity: 0.7;
-  margin: 0.5rem 0 1.5rem;
+  font-size: 0.85rem;
+  opacity: 0.65;
+  margin: 0.5rem 0 1.75rem;
 }
 
 /* Grade de produtos */
@@ -122,15 +157,21 @@ body {
 
 .produto-card {
   background: white;
-  border-radius: 16px;
+  border-radius: var(--raio);
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(59, 84, 120, 0.12);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--sombra);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .produto-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(59, 84, 120, 0.18);
+  box-shadow: var(--sombra-hover);
+}
+
+.produto-card .produto-imagem-wrapper {
+  overflow: hidden;
 }
 
 .produto-card img {
@@ -139,42 +180,58 @@ body {
   object-fit: cover;
   display: block;
   background: var(--azul-lavanda-claro);
+  transition: transform 0.25s ease;
+}
+
+.produto-card:hover img {
+  transform: scale(1.04);
 }
 
 .produto-info {
-  padding: 1rem;
+  padding: 1rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .produto-categoria {
   display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--azul-petroleo);
+  letter-spacing: 0.04em;
+  color: var(--azul-petroleo-escuro);
   background: var(--dourado-claro);
-  padding: 0.15rem 0.6rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.produto-card[data-categoria="frio"] .produto-categoria {
+  background: var(--azul-lavanda-claro);
 }
 
 .produto-info h2 {
   font-family: var(--fonte-logo);
   font-size: 1.15rem;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
+  color: var(--azul-petroleo-escuro);
 }
 
 .produto-descricao {
-  font-size: 0.9rem;
-  margin: 0 0 0.75rem;
-  opacity: 0.85;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  margin: 0 0 0.9rem;
+  opacity: 0.8;
+  line-height: 1.45;
+  flex: 1;
 }
 
 .produto-preco {
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   margin: 0;
+  color: var(--azul-petroleo-escuro);
 }
 
 .sem-resultado,
@@ -182,8 +239,9 @@ body {
 .erro {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 2rem 1rem;
-  opacity: 0.7;
+  padding: 3rem 1rem;
+  opacity: 0.65;
+  font-size: 0.95rem;
 }
 
 /* Vídeo (página /como-fiz) */
@@ -193,7 +251,7 @@ body {
   width: 100%;
   aspect-ratio: 16 / 9;
   background: var(--azul-petroleo);
-  border-radius: 16px;
+  border-radius: var(--raio);
   overflow: hidden;
   margin-top: 1rem;
 }
@@ -210,10 +268,11 @@ body {
 
 footer {
   text-align: center;
-  padding: 1.5rem;
+  padding: 1.75rem;
   font-size: 0.85rem;
   color: var(--azul-petroleo);
-  opacity: 0.7;
+  opacity: 0.65;
+  border-top: 1px solid rgba(59, 84, 120, 0.12);
 }
 
 /* Responsivo */

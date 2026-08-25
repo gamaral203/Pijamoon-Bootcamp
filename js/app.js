@@ -26,6 +26,7 @@ function popularCategorias(produtos) {
 function criarCardProduto(produto) {
     const card = document.createElement("article");
     card.className = "produto-card";
+    card.dataset.categoria = produto.categoria;
     card.innerHTML = `
     <img src="${produto.imagem}" alt="${produto.nome}" loading="lazy">
     <div class="produto-info">
