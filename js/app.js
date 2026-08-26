@@ -2,6 +2,10 @@
 const containerProdutos = document.getElementById("produtos");
 const campoBusca = document.getElementById("busca");
 const statusBusca = document.getElementById("status");
+const heroSlides = document.getElementById("heroSlides");
+const heroDots = document.getElementById("heroDots");
+const heroBtnAnterior = document.getElementById("heroBtnAnterior");
+const heroBtnProxima = document.getElementById("heroBtnProxima");
 const categoriasDropdown = document.getElementById("categoriasDropdown");
 const categoriasTrigger = document.getElementById("categoriasTrigger");
 const categoriasMenu = document.getElementById("categoriasMenu");
@@ -19,6 +23,62 @@ let catalogo = [];
 let categoriaAtual = "todas";
 let modalFotos = [];
 let modalIndice = 0;
+let heroIndice = 0;
+let heroTimer;
+function irParaSlideHero(indice) {
+    const slides = heroSlides.querySelectorAll(".hero-slide");
+    const dots = heroDots.querySelectorAll(".dot");
+    if (slides.length === 0)
+        return;
+    heroIndice = (indice + slides.length) % slides.length;
+    slides.forEach((slide, i) => slide.classList.toggle("ativo", i === heroIndice));
+    dots.forEach((dot, i) => dot.classList.toggle("ativo", i === heroIndice));
+}
+function pararAutoplayHero() {
+    if (heroTimer !== undefined) {
+        window.clearInterval(heroTimer);
+        heroTimer = undefined;
+    }
+}
+function iniciarAutoplayHero() {
+    pararAutoplayHero();
+    const prefereReduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefereReduzirMovimento)
+        return;
+    heroTimer = window.setInterval(() => irParaSlideHero(heroIndice + 1), 5000);
+}
+function mudarSlideHero(delta) {
+    irParaSlideHero(heroIndice + delta);
+    iniciarAutoplayHero();
+}
+function renderizarHero(produtos) {
+    if (produtos.length === 0)
+        return;
+    heroSlides.innerHTML = produtos
+        .map((produto, i) => {
+        const foco = produto.focoHero ?? 45;
+        return `<img src="${produto.imagem}" alt="" class="hero-slide${i === 0 ? " ativo" : ""}" style="object-position: center ${foco}%" loading="${i === 0 ? "eager" : "lazy"}">`;
+    })
+        .join("");
+    heroDots.innerHTML = produtos
+        .map((_, i) => `<span class="dot${i === 0 ? " ativo" : ""}"></span>`)
+        .join("");
+    heroIndice = 0;
+    iniciarAutoplayHero();
+}
+heroBtnAnterior.addEventListener("click", () => mudarSlideHero(-1));
+heroBtnProxima.addEventListener("click", () => mudarSlideHero(1));
+heroDots.addEventListener("click", (evento) => {
+    const alvo = evento.target;
+    if (!alvo.classList.contains("dot"))
+        return;
+    const dots = Array.from(heroDots.querySelectorAll(".dot"));
+    const indice = dots.indexOf(alvo);
+    if (indice >= 0) {
+        irParaSlideHero(indice);
+        iniciarAutoplayHero();
+    }
+});
 async function carregarProdutos() {
     const resposta = await fetch("data/products.json");
     if (!resposta.ok) {
@@ -193,6 +253,7 @@ function aplicarFiltros() {
 async function iniciar() {
     try {
         catalogo = await carregarProdutos();
+        renderizarHero(catalogo);
         popularCategorias(catalogo);
         renderizarProdutos(catalogo);
     }

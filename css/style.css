@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   font-family: var(--fonte-corpo);
@@ -136,7 +140,7 @@ body {
 .categorias-menu {
   position: absolute;
   top: 100%;
-  left: 0;
+  right: 0;
   min-width: 190px;
   background: white;
   border-radius: 12px;
@@ -194,39 +198,207 @@ body {
   cursor: not-allowed;
 }
 
-/* Hero: céu noturno decorativo, só com CSS */
+/* Hero: carrossel de fotos da coleção */
 
 .hero {
   position: relative;
-  text-align: center;
-  padding: 3rem 1.5rem 2.5rem;
   overflow: hidden;
-  background:
-    radial-gradient(2px 2px at 15% 30%, var(--dourado) 0%, transparent 60%),
-    radial-gradient(2px 2px at 80% 20%, var(--dourado) 0%, transparent 60%),
-    radial-gradient(1.5px 1.5px at 60% 60%, var(--dourado-claro) 0%, transparent 60%),
-    radial-gradient(1.5px 1.5px at 30% 75%, var(--dourado-claro) 0%, transparent 60%),
-    radial-gradient(1.5px 1.5px at 90% 65%, var(--dourado) 0%, transparent 60%),
-    linear-gradient(180deg, var(--azul-lavanda-claro), var(--branco-nuvem));
+  /* height: clamp() em vez de aspect-ratio + max-height — combinar os dois faz o
+     navegador encolher a LARGURA pra manter a proporção quando max-height corta
+     a altura, em telas largas (bug real encontrado testando em 1900px) */
+  height: clamp(380px, 55vw, 620px);
+  background: linear-gradient(180deg, var(--azul-lavanda-claro), var(--branco-nuvem));
 }
 
-.hero h1 {
+.hero-slides {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* o hero é bem mais largo que alto, então só uma faixa fina da foto (retrato)
+     fica visível. o ponto de corte ideal varia foto a foto (pose diferente em
+     cada uma), então cada <img> recebe seu próprio object-position inline via
+     o campo "focoHero" do products.json — isso aqui é só o valor de reserva */
+  object-position: center 45%;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.hero-slide.ativo {
+  opacity: 1;
+}
+
+/* escurece a base da foto pra manter o texto legível por cima */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(44, 64, 93, 0.05) 0%, rgba(44, 64, 93, 0.75) 100%);
+  pointer-events: none;
+}
+
+.hero-conteudo {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem 2.5rem 3.5rem;
+  max-width: 560px;
+  /* essa caixa é alta e larga (pra alinhar o texto embaixo), mas o espaço
+     vazio dela tampava o clique nas setas por baixo — deixa os cliques
+     passarem direto, e liga de volta só no botão que precisa ser clicável */
+  pointer-events: none;
+}
+
+.hero-conteudo h1 {
   font-family: var(--fonte-logo);
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   margin: 0 0 0.5rem;
+  color: white;
+}
+
+.hero-conteudo p {
+  margin: 0 0 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-cta {
+  align-self: flex-start;
+  pointer-events: auto;
+  font-family: var(--fonte-corpo);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--azul-petroleo-escuro);
+  background: white;
+  text-decoration: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  transition: transform 0.15s ease;
+}
+
+.hero-cta:hover,
+.hero-cta:focus-visible {
+  transform: translateY(-2px);
+}
+
+.hero-seta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(44, 64, 93, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s ease;
+}
+
+.hero-seta:hover,
+.hero-seta:focus-visible {
+  background: rgba(44, 64, 93, 0.75);
+}
+
+.hero-seta-anterior {
+  left: 1rem;
+}
+
+.hero-seta-proxima {
+  right: 1rem;
+}
+
+.hero-dots {
+  position: absolute;
+  z-index: 2;
+  bottom: 1.25rem;
+  right: 2rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.hero-dots .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.hero-dots .dot.ativo {
+  background: var(--dourado);
+  transform: scale(1.2);
+}
+
+/* Faixa de confiança: frete, pagamento, segurança, suporte */
+
+.confianca {
+  padding: 2rem 1.5rem;
+}
+
+.confianca-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.confianca-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 1rem 1.1rem;
+}
+
+.confianca-icone {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dourado-claro);
+  color: var(--azul-petroleo-escuro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confianca-texto h3 {
+  font-size: 0.9rem;
+  margin: 0 0 0.15rem;
   color: var(--azul-petroleo-escuro);
 }
 
-.hero p {
+.confianca-texto p {
+  font-size: 0.8rem;
   margin: 0;
-  color: var(--azul-petroleo);
-  opacity: 0.85;
+  opacity: 0.7;
+  line-height: 1.3;
 }
 
 .loja {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 1.5rem 3rem;
+}
+
+#produtos {
+  scroll-margin-top: 90px;
 }
 
 #status {
@@ -523,6 +695,7 @@ footer {
     flex-wrap: wrap;
     justify-content: space-between;
     row-gap: 0.6rem;
+    padding: 0.6rem 1rem;
   }
 
   .logo {
@@ -531,6 +704,7 @@ footer {
 
   .header-direita {
     order: 2;
+    gap: 0.15rem;
   }
 
   .header-centro {
@@ -542,5 +716,152 @@ footer {
   .header-busca {
     flex: 1;
     width: auto;
+  }
+
+  /* font-size 16px evita o zoom automático do Safari/iOS ao focar o input */
+  .header-busca input {
+    font-size: 16px;
+    padding: 0.55rem 1rem 0.55rem 2.2rem;
+  }
+
+  .categorias-trigger {
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  /* área de toque real de 34px é pequena demais no celular; o padding
+     transparente estende a área clicável sem alterar o tamanho visual */
+  .icone-header {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-alternar-foto {
+    width: 36px;
+    height: 36px;
+  }
+
+  .modal-fechar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.6rem;
+  }
+
+  .confianca {
+    padding: 1.25rem 1rem;
+  }
+
+  .confianca-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .confianca-item {
+    padding: 0.85rem;
+  }
+
+  .loja {
+    padding: 0 1rem 2.5rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .produto-info {
+    padding: 0.75rem 0.7rem 0.85rem;
+  }
+
+  .produto-categoria {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .produto-info h2 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .produto-descricao {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    margin-bottom: 0.5rem;
+    /* corta em 2 linhas pra cards de 2 colunas não ficarem com alturas desiguais */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .produto-preco {
+    font-size: 0.95rem;
+  }
+
+  .hero {
+    height: clamp(420px, 133vw, 520px);
+  }
+
+  .hero-conteudo {
+    padding: 1.5rem 1.5rem 2.5rem;
+  }
+
+  .hero-seta {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hero-dots {
+    right: 1.25rem;
+    bottom: 1rem;
+  }
+
+  #produtos {
+    scroll-margin-top: 150px;
+  }
+
+  .modal-info {
+    padding: 1.25rem;
+  }
+
+  .modal-info h2 {
+    font-size: 1.5rem;
+    margin-top: 0.3rem;
+  }
+
+  .modal-info .produto-preco {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .confianca-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-centro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .header-busca {
+    width: 100%;
+  }
+
+  .categorias-dropdown {
+    align-self: stretch;
+  }
+
+  .categorias-trigger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .categorias-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
   }
 }

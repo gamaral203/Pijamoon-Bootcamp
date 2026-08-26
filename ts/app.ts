@@ -6,11 +6,17 @@ interface Produto {
   descricao: string;
   imagem: string;
   imagemCostas?: string;
+  focoHero?: number;
 }
 
 const containerProdutos = document.getElementById("produtos") as HTMLDivElement;
 const campoBusca = document.getElementById("busca") as HTMLInputElement;
 const statusBusca = document.getElementById("status") as HTMLParagraphElement;
+
+const heroSlides = document.getElementById("heroSlides") as HTMLDivElement;
+const heroDots = document.getElementById("heroDots") as HTMLDivElement;
+const heroBtnAnterior = document.getElementById("heroBtnAnterior") as HTMLButtonElement;
+const heroBtnProxima = document.getElementById("heroBtnProxima") as HTMLButtonElement;
 
 const categoriasDropdown = document.getElementById("categoriasDropdown") as HTMLDivElement;
 const categoriasTrigger = document.getElementById("categoriasTrigger") as HTMLButtonElement;
@@ -31,6 +37,71 @@ let catalogo: Produto[] = [];
 let categoriaAtual = "todas";
 let modalFotos: string[] = [];
 let modalIndice = 0;
+
+let heroIndice = 0;
+let heroTimer: number | undefined;
+
+function irParaSlideHero(indice: number): void {
+  const slides = heroSlides.querySelectorAll<HTMLImageElement>(".hero-slide");
+  const dots = heroDots.querySelectorAll<HTMLSpanElement>(".dot");
+  if (slides.length === 0) return;
+
+  heroIndice = (indice + slides.length) % slides.length;
+  slides.forEach((slide, i) => slide.classList.toggle("ativo", i === heroIndice));
+  dots.forEach((dot, i) => dot.classList.toggle("ativo", i === heroIndice));
+}
+
+function pararAutoplayHero(): void {
+  if (heroTimer !== undefined) {
+    window.clearInterval(heroTimer);
+    heroTimer = undefined;
+  }
+}
+
+function iniciarAutoplayHero(): void {
+  pararAutoplayHero();
+  const prefereReduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefereReduzirMovimento) return;
+  heroTimer = window.setInterval(() => irParaSlideHero(heroIndice + 1), 5000);
+}
+
+function mudarSlideHero(delta: number): void {
+  irParaSlideHero(heroIndice + delta);
+  iniciarAutoplayHero();
+}
+
+function renderizarHero(produtos: Produto[]): void {
+  if (produtos.length === 0) return;
+
+  heroSlides.innerHTML = produtos
+    .map((produto, i) => {
+      const foco = produto.focoHero ?? 45;
+      return `<img src="${produto.imagem}" alt="" class="hero-slide${i === 0 ? " ativo" : ""}" style="object-position: center ${foco}%" loading="${i === 0 ? "eager" : "lazy"}">`;
+    })
+    .join("");
+
+  heroDots.innerHTML = produtos
+    .map((_, i) => `<span class="dot${i === 0 ? " ativo" : ""}"></span>`)
+    .join("");
+
+  heroIndice = 0;
+  iniciarAutoplayHero();
+}
+
+heroBtnAnterior.addEventListener("click", () => mudarSlideHero(-1));
+heroBtnProxima.addEventListener("click", () => mudarSlideHero(1));
+
+heroDots.addEventListener("click", (evento: MouseEvent) => {
+  const alvo = evento.target as HTMLElement;
+  if (!alvo.classList.contains("dot")) return;
+
+  const dots = Array.from(heroDots.querySelectorAll<HTMLSpanElement>(".dot"));
+  const indice = dots.indexOf(alvo as HTMLSpanElement);
+  if (indice >= 0) {
+    irParaSlideHero(indice);
+    iniciarAutoplayHero();
+  }
+});
 
 async function carregarProdutos(): Promise<Produto[]> {
   const resposta = await fetch("data/products.json");
@@ -245,6 +316,7 @@ function aplicarFiltros(): void {
 async function iniciar(): Promise<void> {
   try {
     catalogo = await carregarProdutos();
+    renderizarHero(catalogo);
     popularCategorias(catalogo);
     renderizarProdutos(catalogo);
   } catch (erro) {
