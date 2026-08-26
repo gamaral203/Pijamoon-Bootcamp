@@ -104,6 +104,7 @@ function contarItensCarrinho(): number {
  */
 function atualizarHeaderConta(raiz: string = ""): void {
   const botaoConta = document.getElementById("botaoConta") as HTMLButtonElement | null;
+  const contaNome = document.getElementById("contaNome") as HTMLSpanElement | null;
   const badgeCarrinho = document.getElementById("badgeCarrinho") as HTMLSpanElement | null;
 
   if (botaoConta) {
@@ -118,6 +119,11 @@ function atualizarHeaderConta(raiz: string = ""): void {
         sairUsuario();
         window.location.href = `${raiz}index.html`;
       };
+
+      if (contaNome) {
+        contaNome.textContent = primeiroNome;
+        contaNome.hidden = false;
+      }
     } else {
       botaoConta.title = "Entrar";
       botaoConta.setAttribute("aria-label", "Entrar");
@@ -125,6 +131,11 @@ function atualizarHeaderConta(raiz: string = ""): void {
       botaoConta.onclick = () => {
         window.location.href = `${raiz}login/index.html`;
       };
+
+      if (contaNome) {
+        contaNome.textContent = "";
+        contaNome.hidden = true;
+      }
     }
   }
 

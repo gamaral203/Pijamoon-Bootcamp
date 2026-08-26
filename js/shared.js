@@ -67,6 +67,7 @@ function contarItensCarrinho() {
  */
 function atualizarHeaderConta(raiz = "") {
     const botaoConta = document.getElementById("botaoConta");
+    const contaNome = document.getElementById("contaNome");
     const badgeCarrinho = document.getElementById("badgeCarrinho");
     if (botaoConta) {
         const usuario = obterUsuario();
@@ -79,6 +80,10 @@ function atualizarHeaderConta(raiz = "") {
                 sairUsuario();
                 window.location.href = `${raiz}index.html`;
             };
+            if (contaNome) {
+                contaNome.textContent = primeiroNome;
+                contaNome.hidden = false;
+            }
         }
         else {
             botaoConta.title = "Entrar";
@@ -87,6 +92,10 @@ function atualizarHeaderConta(raiz = "") {
             botaoConta.onclick = () => {
                 window.location.href = `${raiz}login/index.html`;
             };
+            if (contaNome) {
+                contaNome.textContent = "";
+                contaNome.hidden = true;
+            }
         }
     }
     if (badgeCarrinho) {

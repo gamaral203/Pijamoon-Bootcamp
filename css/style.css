@@ -210,6 +210,14 @@ body {
   background: var(--dourado-claro);
 }
 
+.conta-nome {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--azul-petroleo-escuro);
+  white-space: nowrap;
+  margin-right: 0.1rem;
+}
+
 .badge-carrinho {
   position: absolute;
   top: -2px;
@@ -1135,6 +1143,12 @@ footer {
   .header-direita {
     order: 2;
     gap: 0.15rem;
+  }
+
+  /* nome some no mobile pra não apertar o cabeçalho; o ícone dourado
+     (.icone-header.logado) e o tooltip já indicam que está logado */
+  .conta-nome {
+    display: none;
   }
 
   .header-centro {
