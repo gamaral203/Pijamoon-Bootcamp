@@ -185,6 +185,7 @@ body {
 }
 
 .icone-header {
+  position: relative;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -194,8 +195,35 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.55;
-  cursor: not-allowed;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.icone-header:hover,
+.icone-header.ativo {
+  background: rgba(59, 84, 120, 0.1);
+}
+
+.icone-header.logado {
+  color: var(--azul-petroleo-escuro);
+  background: var(--dourado-claro);
+}
+
+.badge-carrinho {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--azul-petroleo-escuro);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
 }
 
 /* Hero simples: usado em páginas secundárias (ex: /como-fiz), só texto */
@@ -715,8 +743,18 @@ body {
   font-family: var(--fonte-corpo);
   font-weight: 600;
   font-size: 0.95rem;
-  cursor: not-allowed;
-  opacity: 0.55;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-comprar:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-comprar:disabled {
+  opacity: 0.75;
+  cursor: default;
 }
 
 .produto-detalhe-descricao h2 {
@@ -761,6 +799,272 @@ body {
   background: var(--azul-petroleo-escuro);
   border-color: var(--azul-petroleo-escuro);
   color: white;
+}
+
+/* Página de login (login/index.html) — simulado no localStorage, sem
+   servidor nem senha real por trás (ver nota em ts/shared.ts) */
+
+.login-pagina {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.login-caixa {
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-caixa h1 {
+  font-family: var(--fonte-logo);
+  font-size: 1.6rem;
+  margin: 0;
+  color: var(--azul-petroleo-escuro);
+}
+
+.login-aviso {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.login-ja-logado {
+  font-size: 0.85rem;
+  background: var(--dourado-claro);
+  color: var(--azul-petroleo-escuro);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.login-ja-logado a {
+  color: var(--azul-petroleo-escuro);
+  font-weight: 600;
+}
+
+.login-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--azul-petroleo-escuro);
+}
+
+.login-campo input {
+  font-family: var(--fonte-corpo);
+  font-size: 0.95rem;
+  font-weight: 400;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--azul-lavanda);
+  border-radius: 8px;
+  color: var(--azul-petroleo-escuro);
+}
+
+.login-campo input:focus {
+  outline: 2px solid var(--dourado);
+  outline-offset: 1px;
+}
+
+.login-botao {
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--azul-petroleo-escuro);
+  color: white;
+  font-family: var(--fonte-corpo);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.login-botao:hover {
+  transform: translateY(-1px);
+}
+
+/* Página de carrinho (carrinho/index.html) */
+
+.carrinho-pagina {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.carrinho-pagina h1 {
+  font-family: var(--fonte-logo);
+  font-size: 1.85rem;
+  margin: 0 0 1.5rem;
+  color: var(--azul-petroleo-escuro);
+}
+
+.carrinho-vazio {
+  opacity: 0.7;
+}
+
+.carrinho-vazio a {
+  color: var(--azul-petroleo-escuro);
+  font-weight: 600;
+}
+
+.carrinho-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.carrinho-item {
+  display: grid;
+  grid-template-columns: 72px 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 0.85rem 1rem;
+}
+
+.carrinho-item-imagem {
+  display: block;
+  width: 72px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--azul-lavanda-claro);
+}
+
+.carrinho-item-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carrinho-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.carrinho-item-nome {
+  font-weight: 700;
+  color: var(--azul-petroleo-escuro);
+  text-decoration: none;
+}
+
+.carrinho-item-nome:hover {
+  text-decoration: underline;
+}
+
+.carrinho-item-tamanho,
+.carrinho-item-preco-unit {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.carrinho-item-qtd button {
+  width: 32px;
+  height: 34px;
+  font-size: 1rem;
+}
+
+.carrinho-item-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.carrinho-item-subtotal {
+  color: var(--azul-petroleo-escuro);
+  white-space: nowrap;
+}
+
+.carrinho-item-remover {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--azul-petroleo);
+  opacity: 0.6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.carrinho-item-remover:hover {
+  background: rgba(59, 84, 120, 0.1);
+  opacity: 1;
+}
+
+.carrinho-resumo {
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 1.25rem 1.5rem;
+}
+
+.carrinho-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 1.1rem;
+  color: var(--azul-petroleo-escuro);
+  margin-bottom: 1rem;
+}
+
+.carrinho-total strong {
+  font-size: 1.6rem;
+}
+
+.carrinho-aviso-login {
+  font-size: 0.85rem;
+  background: var(--dourado-claro);
+  color: var(--azul-petroleo-escuro);
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  margin: 0 0 1rem;
+}
+
+.carrinho-aviso-login a {
+  color: var(--azul-petroleo-escuro);
+  font-weight: 700;
+}
+
+.carrinho-resumo .btn-comprar {
+  width: 100%;
+}
+
+.carrinho-sucesso {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.carrinho-sucesso p:first-child {
+  font-family: var(--fonte-logo);
+  font-size: 1.5rem;
+  color: var(--azul-petroleo-escuro);
+  margin: 0 0 0.5rem;
+}
+
+.carrinho-sucesso-nota {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0 0 1.5rem;
 }
 
 /* Vídeo (página /como-fiz) */
@@ -933,6 +1237,47 @@ footer {
 
   .produto-detalhe-info .produto-preco {
     font-size: 1.35rem;
+  }
+
+  .login-pagina {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .login-caixa {
+    padding: 1.5rem;
+  }
+
+  .carrinho-pagina {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .carrinho-item {
+    grid-template-columns: 56px 1fr;
+    grid-template-areas:
+      "imagem info"
+      "imagem qtd"
+      "imagem acoes";
+    row-gap: 0.5rem;
+  }
+
+  .carrinho-item-imagem {
+    grid-area: imagem;
+    width: 56px;
+    height: 76px;
+  }
+
+  .carrinho-item-info {
+    grid-area: info;
+  }
+
+  .carrinho-item-qtd {
+    grid-area: qtd;
+    justify-self: start;
+  }
+
+  .carrinho-item-acoes {
+    grid-area: acoes;
+    justify-content: space-between;
   }
 }
 
