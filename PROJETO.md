@@ -136,6 +136,9 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
   - Criação do bucket, OAC, distribution e política foram feitos via AWS CLI (usuário IAM `Gabriel_Amaral` — precisou receber as policies `AmazonS3FullAccess` e `CloudFrontFullAccess`, não tinha permissão nem de listar bucket antes disso).
   - Testado com Playwright direto na URL de produção: home carrega, 6 produtos renderizam, sem erro de console.
   - Bom material pra pergunta 3 do vídeo: a jornada real é `navegador → CloudFront (edge cache) → S3 (origem, só na primeira vez ou cache expirado)`, com HTTPS e origem privada.
+  - **Atenção:** o S3 não sincroniza sozinho com o git. Depois de qualquer commit que mude arquivo do site, alguém precisa re-subir o(s) arquivo(s) mudado(s) pro bucket e rodar uma invalidação do CloudFront (`aws cloudfront create-invalidation --distribution-id ER9G66Y0YYVCL --paths "/*"`), senão o CloudFront serve a versão em cache antiga por até 24h.
+
+**Ideia futura anotada, não obrigatória (26/08):** Gabriel comentou que, se um dia o catálogo migrar pra um banco de dados de verdade (ex: Supabase, cogitado antes — ver decisão acima de manter `products.json` por enquanto), faria sentido ter uma área de **admin** pra cadastrar/editar produto sem mexer em código. Não faz sentido com o `products.json` atual (edição é direto no arquivo). Não construir agora — só registrar a ideia pra quando/se migrar pra banco real.
 
 **Ainda falta (obrigatório):** gravar o vídeo (incluindo rodar o Lighthouse **ao vivo** de novo na hora da gravação, contra a URL da AWS agora — o que já foi feito antes foi só preparação/correção local) e montar `/como-fiz` com o vídeo embutido. Teste em celular real já foi feito via servidor local na rede Wi-Fi (26/08) — layout mobile validado e aprovado por Gabriel.
 
