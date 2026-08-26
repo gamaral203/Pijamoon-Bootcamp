@@ -19,10 +19,11 @@ Notas de alinhamento entre Gabriel e Claude. Se a conversa for perdida (troca de
 ### Avaliação
 Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lighthouse comentado (15) · Conexão com os workshops (10).
 
-### Bônus (não fazer agora — escopo básico primeiro)
+### Bônus
 - [ ] Vídeo auto-hospedado (+10) — decisão pendente.
 - [ ] Diagrama de arquitetura com BFF para app mobile (+10) — conceito já explicado a Gabriel, diagrama ainda não feito.
-- [ ] Carrinho, checkout fictício, dark mode — não iniciado (ícones de conta/carrinho no header são só placeholder visual, sem função).
+- [x] Carrinho + checkout fictício (26/08) — carrinho persistido no navegador, login simulado obrigatório pra finalizar a compra. Ver seção própria em Decisões abaixo.
+- [ ] Dark mode — não iniciado.
 
 ## Decisões já tomadas
 
@@ -31,6 +32,12 @@ Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lig
 - **Não usar os outros projetos Pijamoon como referência** (`pijamoon-catalogo`, `pijamoon`, `pijamoon-react` — repositórios reais e distintos do Gabriel). Este projeto é isolado, construído do zero.
 - **Escopo evoluiu além do básico (atualizado 26/08).** O plano original era "básico primeiro, sem carrinho/checkout/extras", mas ao longo do desenvolvimento Gabriel pediu e foram adicionados: página de detalhes do produto com foto ampliada, descrição completa e tamanhos (P/M/G/GG), navegação entre foto de frente/costas, dropdown de categorias no cabeçalho, ícones decorativos de conta/carrinho (sem função ainda — pensados como base pro checkout, que ele quer fazer depois), carrossel de fotos no hero (autoplay, setas, dots, ponto de foco por foto via campo `focoHero` em `products.json`) e uma faixa de selos de confiança (frete/pagamento/segurança/suporte) entre o hero e a grade de produtos. Carrinho/checkout de verdade continuam para depois, não são item pontuado no PDF oficial.
 - **Detalhe do produto é página própria, não modal (atualizado 26/08).** Começou como modal (popup por cima da vitrine), mas Gabriel pediu uma transição de página de verdade, tipo loja real. Virou `produto/index.html?id=...` — segue o mesmo padrão multi-página que já existia em `/como-fiz`. `ts/shared.ts` guarda o que os dois scripts (`app.ts` da vitrine e `produto.ts` da página de detalhe) precisam em comum (buscar catálogo, formatar preço, etc.), carregado antes de cada um via `<script>` — sem bundler, sem import/export, só ordem de carregamento.
+- **Carrinho + login obrigatório pra comprar (26/08).** Gabriel pediu carrinho com compra travada até logar. Como o site é estático (sem servidor, sem banco — requisito obrigatório já cumprido), um login "de verdade" com senha validada não é possível sem sair desse escopo. Decisão tomada com Gabriel: **login 100% simulado no navegador**, salvo em `localStorage` (`pijamoon_usuario`), sem senha real verificada em lugar nenhum — mesma honestidade dos botões "em breve"/decorativos já usados no projeto. Fluxo: navegar e adicionar ao carrinho não exige login; só o botão **"Finalizar compra"** exige. Sem login, redireciona pra `login/index.html?next=carrinho/index.html` e volta pro carrinho depois de entrar.
+  - Novas páginas: `login/index.html` (formulário nome/e-mail/senha, senha não é validada — só preenchida por completude visual) e `carrinho/index.html` (lista de itens, quantidade, remover, total, finalizar).
+  - Carrinho persistido em `localStorage` (`pijamoon_carrinho`) como lista de `{produtoId, tamanho, quantidade}` — sobrevive a fechar/reabrir o navegador, mas é local a cada dispositivo (não sincroniza entre celular e PC, por exemplo, porque não tem servidor).
+  - "Finalizar compra" com login feito: limpa o carrinho e mostra uma tela de "Pedido confirmado" — não processa pagamento nenhum (checkout fictício, como o PDF permite como bônus).
+  - Ponto pra pergunta 5 do vídeo (onde entraria IA) e pergunta 3 (AWS): numa loja de verdade, esse login viraria um serviço de autenticação de verdade (Cognito, Auth0, Firebase Auth) rodando fora do site estático, e o carrinho seria persistido num backend em vez do `localStorage`.
+  - Problema técnico resolvido no caminho: os scripts de cada página (`app.ts`, `produto.ts`, `login.ts`, `carrinho.ts`) declaravam variáveis com o mesmo nome (`RAIZ`, `catalogo`) e davam erro de compilação, porque sem bundler/módulos o TypeScript trata todos os arquivos como um escopo global só. Resolvido envolvendo cada script de página numa IIFE (`(function () { ... })();`), isolando o escopo de cada um — só `shared.ts` fica de fato global.
 - **Produtos:** catálogo com 6 pijamas reais (fotos de frente e costas cada). Categorias são por **tipo de corte da peça** (não mais frio/calor): `alcinha`, `americano`, `calça`, `camisa`, `camisola` — batem com os nomes dos arquivos de foto que Gabriel enviou.
 - **Identidade visual definida:** logo/hero real já enviado por Gabriel — ilustração de uma lua crescente com rosto dormindo sobre nuvens, estrelas douradas, pantufas, máscara de dormir e xícara de chocolate quente. Clima aconchegante/noturno/sonhador.
   - Paleta aproximada: azul lavanda `#9AAFCC`–`#B8C7E0` (céu), dourado/creme `#E8C878`–`#F0D9A0` (estrelas/lua), branco `#F5F5F2` (nuvens), azul petróleo escuro `#3B5478` (logotipo/texto).
@@ -49,10 +56,15 @@ Na prática: depois de cada trecho/arquivo relevante, Claude explica o "porquê"
 PijamoonBootCamp/
 ├── index.html            ← vitrine (Claude escreve, Gabriel valida)
 ├── produto/index.html    ← página de detalhes do produto (?id=...)
+├── login/index.html      ← login simulado (localStorage, sem servidor)
+├── carrinho/index.html   ← carrinho + finalizar compra (fictício)
 ├── css/style.css
-├── ts/shared.ts          ← Produto, carregarProdutos, formatarPreco, capitalizar
+├── ts/shared.ts          ← Produto, carregarProdutos, formatarPreco, capitalizar,
+│                            estado de usuário/carrinho, atualizarHeaderConta
 ├── ts/app.ts             ← lógica da vitrine (hero, busca, filtro, grade)
-├── ts/produto.ts         ← lógica da página de detalhes
+├── ts/produto.ts         ← lógica da página de detalhes + adicionar ao carrinho
+├── ts/login.ts           ← lógica do login simulado
+├── ts/carrinho.ts        ← lógica do carrinho e checkout fictício
 ├── js/                   ← gerado pelo tsc a partir de ts/, não editar à mão
 ├── data/products.json    ← catálogo (6 produtos)
 ├── img/produtos/         ← fotos de frente e costas de cada produto
@@ -88,7 +100,7 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
 
 **Bug de catálogo corrigido (26/08):** as fotos de "Pijama Canela Aconchego" (regata caramelo) e "Pijama Laço de Lua" (camisa de laçinhos) estavam trocadas em `products.json` — cada produto mostrava a foto do outro. Não tinha relação com o carrossel; afetava a grade toda. Corrigido trocando os caminhos `imagem`/`imagemCostas` de volta pro produto certo.
 
-**Modal virou página de produto de verdade (26/08):** o clique no card agora navega pra `produto/index.html?id=...` (mesmo padrão de página separada que `/como-fiz` já usava) em vez de abrir um popup por cima da vitrine. A página tem breadcrumb, galeria com frente/costas, tamanhos (P/M/G/GG, campo `tamanhos` no `products.json`), seletor de quantidade e botão "Comprar" desabilitado (mesmo motivo dos ícones de conta/carrinho — sem checkout ainda). Todo o código do modal foi removido; lógica compartilhada entre a vitrine e a página de produto ficou em `ts/shared.ts`. Dois bugs achados testando essa mudança:
+**Modal virou página de produto de verdade (26/08):** o clique no card agora navega pra `produto/index.html?id=...` (mesmo padrão de página separada que `/como-fiz` já usava) em vez de abrir um popup por cima da vitrine. A página tem breadcrumb, galeria com frente/costas, tamanhos (P/M/G/GG, campo `tamanhos` no `products.json`), seletor de quantidade e botão de comprar (na época, desabilitado — hoje já é o "Adicionar ao carrinho" funcional, ver abaixo). Todo o código do modal foi removido; lógica compartilhada entre a vitrine e a página de produto ficou em `ts/shared.ts`. Dois bugs achados testando essa mudança:
   - `/como-fiz` reaproveitava a classe `.hero` que virou o carrossel — quebrou o hero de texto simples dessa página. Corrigido separando em `.hero` (texto simples, páginas secundárias) e `.hero-carrossel` (fotos, só na home).
   - A tela de "produto não encontrado" não escondia o layout por baixo: o atributo `hidden` do HTML e a regra `.produto-detalhe { display: flex }` têm a mesma especificidade CSS, e a regra vencia. Corrigido com `.produto-detalhe[hidden] { display: none }`.
 
@@ -98,6 +110,9 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
   - **Favicon 404:** navegador pedia `/favicon.ico`, não achava, e isso virava erro no console (conta pra Best Practices). Resolvido com um favicon SVG inline (a luinha dourada), sem precisar de arquivo novo — e adicionado nas 3 páginas (`index.html`, `produto/index.html`, `como-fiz/index.html`).
   - **Nota sobre o 96 em Best Practices:** o item que falta ("Content security policy" no painel Issues) é causado pelo **Live Server do VS Code** (o script que ele injeta pra dar refresh automático), não pelo código do site — confirmado rodando o mesmo Lighthouse contra um servidor sem essa injeção, que deu 100/100/100. Deve sumir sozinho quando a loja estiver hospedada de verdade. Bom ponto pra comentar no vídeo: mostra que dá pra diferenciar "problema real" de "artefato da ferramenta de desenvolvimento".
   - **Duas oportunidades de performance identificadas mas deixadas pra depois** (Gabriel decidiu não mexer agora): imagens dos produtos servidas em 900×1350 mas exibidas bem menores nos cards da grade (~347 KiB de banda desperdiçada — resolveria com `srcset`/versões menores) e fontes do Google Fonts bloqueando a primeira renderização (~830ms). Válido citar no vídeo como "o que eu melhoraria primeiro" mesmo sem ter corrigido.
+
+**Carrinho + login simulado implementados e testados (26/08):** ver a decisão detalhada acima ("Carrinho + login obrigatório pra comprar"). Testado com Playwright de ponta a ponta: adicionar ao carrinho (com tamanho e quantidade), badge do carrinho atualizando no cabeçalho, mudar quantidade e remover item no carrinho, total recalculando, bloqueio real ao tentar finalizar sem login (redireciona e volta pro carrinho depois), login persistindo entre recarregamentos de página (localStorage), logout pelo ícone de conta, carrinho vazio, e finalizar compra limpando o carrinho e mostrando a tela de sucesso. 35 combinações de página×largura (5 páginas, 320px a 1904px) sem overflow horizontal nem erro no console.
+  - Ícones de conta/carrinho do cabeçalho, que eram só placeholder "em breve", agora são funcionais em todas as páginas (`index.html`, `produto/index.html`, `login/index.html`, `carrinho/index.html`).
 
 **Decisão explícita do Gabriel (25/08): hospedagem pública fica pra depois**, quando o resto estiver pronto — ele avalia que não é difícil e prefere continuar iterando na loja antes. Risco assumido conscientemente: só descobrir problemas de hospedagem/fetch-hospedado perto do prazo. Claude não deve insistir nisso de novo a menos que o prazo (01/09 17h59) esteja se aproximando perigosamente.
 
