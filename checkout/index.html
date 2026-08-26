@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizar compra — Pijamoon</title>
+  <meta name="description" content="Endereço de entrega e pagamento simulado na Pijamoon.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z' fill='%23E8C878'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="site-header-top">
+      <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
+        <svg class="logo-svg" viewBox="0 0 230 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <circle cx="6" cy="8" r="1.6" fill="#E8C878"/>
+          <circle cx="49" cy="6" r="1.3" fill="#E8C878"/>
+          <circle cx="47" cy="44" r="1.5" fill="#E8C878"/>
+          <path d="M42 26 A18 18 0 1 1 22 7 A14 14 0 0 0 42 26 Z" fill="#E8C878"/>
+          <text x="62" y="37" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="28" fill="#3B5478">Pijamoon</text>
+        </svg>
+      </a>
+      <div class="header-centro"></div>
+
+      <div class="header-direita">
+        <button type="button" class="icone-header" id="botaoConta" title="Entrar" aria-label="Entrar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
+        <span class="conta-nome" id="contaNome" hidden></span>
+        <a href="../carrinho/index.html" class="icone-header" aria-label="Carrinho">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+            <path d="M3 6h18"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span class="badge-carrinho" id="badgeCarrinho" hidden>0</span>
+        </a>
+        <nav>
+          <a href="../carrinho/index.html">Voltar pro carrinho</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="carrinho-pagina checkout-pagina">
+    <h1>Finalizar compra</h1>
+
+    <div id="checkoutConteudo" class="checkout-layout">
+      <div class="checkout-formularios">
+
+        <section class="login-caixa checkout-secao">
+          <h2>Endereço de entrega</h2>
+          <div class="checkout-grid">
+            <label class="login-campo checkout-campo-cep">
+              CEP
+              <input type="text" id="campoCep" placeholder="00000-000" autocomplete="postal-code">
+            </label>
+            <label class="login-campo checkout-campo-largo">
+              Endereço
+              <input type="text" id="campoRua" placeholder="Rua, avenida..." autocomplete="address-line1">
+            </label>
+            <label class="login-campo">
+              Número
+              <input type="text" id="campoNumero" placeholder="123" autocomplete="off">
+            </label>
+            <label class="login-campo checkout-campo-largo">
+              Complemento
+              <input type="text" id="campoComplemento" placeholder="Apto, bloco... (opcional)" autocomplete="address-line2">
+            </label>
+            <label class="login-campo">
+              Bairro
+              <input type="text" id="campoBairro" placeholder="Bairro" autocomplete="off">
+            </label>
+            <label class="login-campo">
+              Cidade
+              <input type="text" id="campoCidade" placeholder="Cidade" autocomplete="address-level2">
+            </label>
+            <label class="login-campo">
+              Estado
+              <select id="campoEstado" autocomplete="address-level1">
+                <option value="">UF</option>
+                <option value="AC">AC — Acre</option>
+                <option value="AL">AL — Alagoas</option>
+                <option value="AP">AP — Amapá</option>
+                <option value="AM">AM — Amazonas</option>
+                <option value="BA">BA — Bahia</option>
+                <option value="CE">CE — Ceará</option>
+                <option value="DF">DF — Distrito Federal</option>
+                <option value="ES">ES — Espírito Santo</option>
+                <option value="GO">GO — Goiás</option>
+                <option value="MA">MA — Maranhão</option>
+                <option value="MT">MT — Mato Grosso</option>
+                <option value="MS">MS — Mato Grosso do Sul</option>
+                <option value="MG">MG — Minas Gerais</option>
+                <option value="PA">PA — Pará</option>
+                <option value="PB">PB — Paraíba</option>
+                <option value="PR">PR — Paraná</option>
+                <option value="PE">PE — Pernambuco</option>
+                <option value="PI">PI — Piauí</option>
+                <option value="RJ">RJ — Rio de Janeiro</option>
+                <option value="RN">RN — Rio Grande do Norte</option>
+                <option value="RS">RS — Rio Grande do Sul</option>
+                <option value="RO">RO — Rondônia</option>
+                <option value="RR">RR — Roraima</option>
+                <option value="SC">SC — Santa Catarina</option>
+                <option value="SP">SP — São Paulo</option>
+                <option value="SE">SE — Sergipe</option>
+                <option value="TO">TO — Tocantins</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="login-caixa checkout-secao">
+          <h2>Pagamento</h2>
+
+          <div class="checkout-metodos" role="radiogroup" aria-label="Forma de pagamento">
+            <label class="checkout-metodo">
+              <input type="radio" name="pagamento" id="metodoCartao" checked>
+              Cartão de crédito
+            </label>
+            <label class="checkout-metodo">
+              <input type="radio" name="pagamento" id="metodoPix">
+              Pix
+            </label>
+          </div>
+
+          <div class="checkout-grid" id="painelCartao">
+            <label class="login-campo checkout-campo-largo">
+              Número do cartão
+              <input type="text" id="campoNumeroCartao" placeholder="0000 0000 0000 0000" autocomplete="cc-number">
+            </label>
+            <label class="login-campo checkout-campo-largo">
+              Nome impresso no cartão
+              <input type="text" id="campoNomeCartao" placeholder="Como está no cartão" autocomplete="cc-name">
+            </label>
+            <label class="login-campo">
+              Validade
+              <input type="text" id="campoValidadeCartao" placeholder="MM/AA" autocomplete="cc-exp">
+            </label>
+            <label class="login-campo">
+              CVV
+              <input type="text" id="campoCvvCartao" placeholder="000" autocomplete="cc-csc">
+            </label>
+          </div>
+
+          <div class="checkout-pix" id="painelPix" hidden>
+            <svg class="checkout-pix-qr" viewBox="0 0 100 100" role="img" aria-label="QR code fictício para pagamento via Pix">
+              <rect width="100" height="100" fill="white"/>
+              <g fill="#2C405D">
+                <rect x="6" y="6" width="22" height="22"/>
+                <rect x="12" y="12" width="10" height="10" fill="white"/>
+                <rect x="72" y="6" width="22" height="22"/>
+                <rect x="78" y="12" width="10" height="10" fill="white"/>
+                <rect x="6" y="72" width="22" height="22"/>
+                <rect x="12" y="78" width="10" height="10" fill="white"/>
+                <rect x="36" y="8" width="6" height="6"/><rect x="48" y="8" width="6" height="6"/><rect x="60" y="14" width="6" height="6"/>
+                <rect x="36" y="20" width="6" height="6"/><rect x="54" y="26" width="6" height="6"/><rect x="42" y="32" width="6" height="6"/>
+                <rect x="8" y="36" width="6" height="6"/><rect x="20" y="42" width="6" height="6"/><rect x="34" y="44" width="6" height="6"/>
+                <rect x="46" y="46" width="6" height="6"/><rect x="58" y="40" width="6" height="6"/><rect x="70" y="46" width="6" height="6"/>
+                <rect x="82" y="38" width="6" height="6"/><rect x="60" y="58" width="6" height="6"/><rect x="72" y="60" width="6" height="6"/>
+                <rect x="84" y="66" width="6" height="6"/><rect x="36" y="60" width="6" height="6"/><rect x="46" y="66" width="6" height="6"/>
+                <rect x="36" y="78" width="6" height="6"/><rect x="48" y="82" width="6" height="6"/><rect x="60" y="76" width="6" height="6"/>
+                <rect x="72" y="82" width="6" height="6"/><rect x="84" y="84" width="6" height="6"/>
+              </g>
+            </svg>
+            <p>Escaneie o QR code com o app do seu banco, ou copie o código abaixo.</p>
+            <div class="checkout-pix-codigo">
+              <code id="codigoPix">00020126580014BR.GOV.BCB.PIX0136pijamoon@exemplo.com5204000053039865802BR5913Pijamoon Ltda6009Sao Paulo62070503***6304ABCD</code>
+              <button type="button" id="botaoCopiarPix">Copiar</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="carrinho-resumo checkout-resumo">
+        <h2>Resumo do pedido</h2>
+        <div id="checkoutItens" class="checkout-itens"></div>
+        <div class="carrinho-total">
+          <span>Total</span>
+          <strong id="checkoutTotal"></strong>
+        </div>
+        <button type="button" class="btn-comprar" id="botaoConfirmarPagamento">Confirmar pagamento</button>
+        <p class="checkout-nota">Simulação pra este desafio — nenhum dado real é enviado ou processado.</p>
+      </aside>
+    </div>
+
+    <div class="carrinho-sucesso" id="checkoutSucesso" hidden>
+      <p>Pedido confirmado! 🎉</p>
+      <p class="carrinho-sucesso-nota">Isso é só uma simulação pra este desafio — nenhum pagamento real foi feito.</p>
+      <a href="../index.html" class="hero-cta">Voltar pra loja</a>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
+  </footer>
+
+  <script src="../js/shared.js" defer></script>
+  <script src="../js/checkout.js" defer></script>
+</body>
+</html>

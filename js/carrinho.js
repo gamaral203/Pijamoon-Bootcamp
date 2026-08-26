@@ -5,7 +5,6 @@
     const carrinhoConteudo = document.getElementById("carrinhoConteudo");
     const carrinhoLista = document.getElementById("carrinhoLista");
     const carrinhoTotal = document.getElementById("carrinhoTotal");
-    const carrinhoSucesso = document.getElementById("carrinhoSucesso");
     const avisoLogin = document.getElementById("avisoLogin");
     const botaoFinalizar = document.getElementById("botaoFinalizar");
     const iconeRemover = `
@@ -94,14 +93,10 @@
     }
     function finalizarCompra() {
         if (!obterUsuario()) {
-            window.location.href = `${RAIZ}login/index.html?next=carrinho/index.html`;
+            window.location.href = `${RAIZ}login/index.html?next=checkout/index.html`;
             return;
         }
-        salvarCarrinho([]);
-        carrinhoConteudo.hidden = true;
-        carrinhoVazio.hidden = true;
-        carrinhoSucesso.hidden = false;
-        atualizarHeaderConta(RAIZ);
+        window.location.href = `${RAIZ}checkout/index.html`;
     }
     botaoFinalizar.addEventListener("click", finalizarCompra);
     async function iniciarCarrinho() {

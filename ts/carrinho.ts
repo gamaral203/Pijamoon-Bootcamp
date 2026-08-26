@@ -5,7 +5,6 @@
   const carrinhoConteudo = document.getElementById("carrinhoConteudo") as HTMLDivElement;
   const carrinhoLista = document.getElementById("carrinhoLista") as HTMLDivElement;
   const carrinhoTotal = document.getElementById("carrinhoTotal") as HTMLElement;
-  const carrinhoSucesso = document.getElementById("carrinhoSucesso") as HTMLDivElement;
   const avisoLogin = document.getElementById("avisoLogin") as HTMLParagraphElement;
   const botaoFinalizar = document.getElementById("botaoFinalizar") as HTMLButtonElement;
 
@@ -107,15 +106,11 @@
 
   function finalizarCompra(): void {
     if (!obterUsuario()) {
-      window.location.href = `${RAIZ}login/index.html?next=carrinho/index.html`;
+      window.location.href = `${RAIZ}login/index.html?next=checkout/index.html`;
       return;
     }
 
-    salvarCarrinho([]);
-    carrinhoConteudo.hidden = true;
-    carrinhoVazio.hidden = true;
-    carrinhoSucesso.hidden = false;
-    atualizarHeaderConta(RAIZ);
+    window.location.href = `${RAIZ}checkout/index.html`;
   }
 
   botaoFinalizar.addEventListener("click", finalizarCompra);
