@@ -702,7 +702,7 @@ body {
 .produto-quantidade-acao {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
 }
 
 .produto-quantidade {
@@ -755,6 +755,24 @@ body {
 .btn-comprar:disabled {
   opacity: 0.75;
   cursor: default;
+}
+
+/* "Adicionar ao carrinho" fica em segundo plano — a ação mais decisiva
+   ("Comprar agora") é quem recebe o botão sólido, cheio de destaque */
+.btn-comprar-secundario {
+  background: white;
+  color: var(--azul-petroleo-escuro);
+  border: 1px solid var(--azul-lavanda);
+}
+
+.btn-comprar-secundario:hover:not(:disabled) {
+  border-color: var(--azul-petroleo);
+}
+
+.btn-comprar-agora {
+  display: block;
+  width: 100%;
+  margin-bottom: 2rem;
 }
 
 .produto-detalhe-descricao h2 {

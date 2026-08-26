@@ -17,6 +17,7 @@
     const qtdMenos = document.getElementById("qtdMenos");
     const qtdMais = document.getElementById("qtdMais");
     const botaoAdicionar = document.getElementById("botaoAdicionar");
+    const botaoComprarAgora = document.getElementById("botaoComprarAgora");
     let fotos = [];
     let indiceFoto = 0;
     let quantidade = 1;
@@ -57,13 +58,16 @@
         quantidade += 1;
         atualizarQuantidade();
     });
-    function adicionarAoCarrinhoAtual() {
+    function guardarProdutoAtualNoCarrinho() {
         if (!produtoAtual)
             return;
         const tamanhoSelecionado = detalheTamanhos.querySelector(".tamanho-opcao.selecionado");
         const tamanho = tamanhoSelecionado?.dataset.tamanho ?? "único";
         adicionarAoCarrinho(produtoAtual.id, tamanho, quantidade);
         atualizarHeaderConta(RAIZ);
+    }
+    botaoAdicionar.addEventListener("click", () => {
+        guardarProdutoAtualNoCarrinho();
         const textoOriginal = botaoAdicionar.textContent;
         botaoAdicionar.textContent = "Adicionado ✓";
         botaoAdicionar.disabled = true;
@@ -71,8 +75,11 @@
             botaoAdicionar.textContent = textoOriginal;
             botaoAdicionar.disabled = false;
         }, 1200);
-    }
-    botaoAdicionar.addEventListener("click", adicionarAoCarrinhoAtual);
+    });
+    botaoComprarAgora.addEventListener("click", () => {
+        guardarProdutoAtualNoCarrinho();
+        window.location.href = `${RAIZ}carrinho/index.html`;
+    });
     function renderizarProduto(produto) {
         produtoAtual = produto;
         fotos = produto.imagemCostas

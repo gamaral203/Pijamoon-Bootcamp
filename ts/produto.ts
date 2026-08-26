@@ -20,6 +20,7 @@
   const qtdMenos = document.getElementById("qtdMenos") as HTMLButtonElement;
   const qtdMais = document.getElementById("qtdMais") as HTMLButtonElement;
   const botaoAdicionar = document.getElementById("botaoAdicionar") as HTMLButtonElement;
+  const botaoComprarAgora = document.getElementById("botaoComprarAgora") as HTMLButtonElement;
 
   let fotos: string[] = [];
   let indiceFoto = 0;
@@ -70,7 +71,7 @@
     atualizarQuantidade();
   });
 
-  function adicionarAoCarrinhoAtual(): void {
+  function guardarProdutoAtualNoCarrinho(): void {
     if (!produtoAtual) return;
 
     const tamanhoSelecionado = detalheTamanhos.querySelector<HTMLButtonElement>(".tamanho-opcao.selecionado");
@@ -78,6 +79,10 @@
 
     adicionarAoCarrinho(produtoAtual.id, tamanho, quantidade);
     atualizarHeaderConta(RAIZ);
+  }
+
+  botaoAdicionar.addEventListener("click", () => {
+    guardarProdutoAtualNoCarrinho();
 
     const textoOriginal = botaoAdicionar.textContent;
     botaoAdicionar.textContent = "Adicionado ✓";
@@ -86,9 +91,12 @@
       botaoAdicionar.textContent = textoOriginal;
       botaoAdicionar.disabled = false;
     }, 1200);
-  }
+  });
 
-  botaoAdicionar.addEventListener("click", adicionarAoCarrinhoAtual);
+  botaoComprarAgora.addEventListener("click", () => {
+    guardarProdutoAtualNoCarrinho();
+    window.location.href = `${RAIZ}carrinho/index.html`;
+  });
 
   function renderizarProduto(produto: Produto): void {
     produtoAtual = produto;
