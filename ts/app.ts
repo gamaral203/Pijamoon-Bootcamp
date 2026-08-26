@@ -10,13 +10,17 @@ interface Produto {
 
 const containerProdutos = document.getElementById("produtos") as HTMLDivElement;
 const campoBusca = document.getElementById("busca") as HTMLInputElement;
-const seletorCategoria = document.getElementById("categoria") as HTMLSelectElement;
 const statusBusca = document.getElementById("status") as HTMLParagraphElement;
+
+const categoriasDropdown = document.getElementById("categoriasDropdown") as HTMLDivElement;
+const categoriasTrigger = document.getElementById("categoriasTrigger") as HTMLButtonElement;
+const categoriasMenu = document.getElementById("categoriasMenu") as HTMLDivElement;
 
 const modalOverlay = document.getElementById("modalOverlay") as HTMLDivElement;
 const modalFechar = document.getElementById("modalFechar") as HTMLButtonElement;
 const modalImagem = document.getElementById("modalImagem") as HTMLImageElement;
-const modalBtnAlternar = document.getElementById("modalBtnAlternar") as HTMLButtonElement;
+const modalBtnAnterior = document.getElementById("modalBtnAnterior") as HTMLButtonElement;
+const modalBtnProxima = document.getElementById("modalBtnProxima") as HTMLButtonElement;
 const modalDots = document.getElementById("modalDots") as HTMLDivElement;
 const modalCategoria = document.getElementById("modalCategoria") as HTMLSpanElement;
 const modalNome = document.getElementById("modalNome") as HTMLHeadingElement;
@@ -24,6 +28,7 @@ const modalDescricao = document.getElementById("modalDescricao") as HTMLParagrap
 const modalPreco = document.getElementById("modalPreco") as HTMLParagraphElement;
 
 let catalogo: Produto[] = [];
+let categoriaAtual = "todas";
 let modalFotos: string[] = [];
 let modalIndice = 0;
 
@@ -39,28 +44,66 @@ function formatarPreco(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function fecharDropdownCategorias(): void {
+  categoriasMenu.classList.remove("aberto");
+  categoriasTrigger.setAttribute("aria-expanded", "false");
+}
+
+function selecionarCategoria(categoria: string): void {
+  categoriaAtual = categoria;
+  const botoes = categoriasMenu.querySelectorAll<HTMLButtonElement>(".categoria-link");
+  botoes.forEach((botao) => botao.classList.toggle("ativo", botao.dataset.categoria === categoria));
+  fecharDropdownCategorias();
+  aplicarFiltros();
+}
+
 function popularCategorias(produtos: Produto[]): void {
   const categorias = [...new Set(produtos.map((p) => p.categoria))].sort();
   for (const categoria of categorias) {
-    const opcao = document.createElement("option");
-    opcao.value = categoria;
-    opcao.textContent = categoria === "frio" ? "Pijamas de frio" : "Pijamas de calor";
-    seletorCategoria.appendChild(opcao);
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "categoria-link";
+    botao.dataset.categoria = categoria;
+    botao.setAttribute("role", "menuitem");
+    botao.textContent = capitalizar(categoria);
+    categoriasMenu.appendChild(botao);
   }
+
+  categoriasMenu.querySelectorAll<HTMLButtonElement>(".categoria-link").forEach((botao) => {
+    botao.addEventListener("click", () => selecionarCategoria(botao.dataset.categoria as string));
+  });
 }
 
-const iconeAlternarFoto = `
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 4v5h5"/>
-    <path d="M20 20v-5h-5"/>
-    <path d="M5 15a7 7 0 0 0 12.9 3.1M19 9A7 7 0 0 0 6.1 5.9"/>
+categoriasTrigger.addEventListener("click", () => {
+  const aberto = categoriasMenu.classList.toggle("aberto");
+  categoriasTrigger.setAttribute("aria-expanded", String(aberto));
+});
+
+document.addEventListener("click", (evento: MouseEvent) => {
+  if (!categoriasDropdown.contains(evento.target as Node)) {
+    fecharDropdownCategorias();
+  }
+});
+
+const iconeAnterior = `
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="15 6 9 12 15 18"></polyline>
+  </svg>
+`;
+
+const iconeProxima = `
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="9 6 15 12 9 18"></polyline>
   </svg>
 `;
 
 function criarCardProduto(produto: Produto): HTMLElement {
   const card = document.createElement("article");
   card.className = "produto-card";
-  card.dataset.categoria = produto.categoria;
 
   const temSegundaFoto = Boolean(produto.imagemCostas);
 
@@ -68,8 +111,11 @@ function criarCardProduto(produto: Produto): HTMLElement {
     <div class="produto-imagem-wrapper">
       <img src="${produto.imagem}" alt="${produto.nome}" loading="lazy" class="produto-imagem">
       ${temSegundaFoto ? `
-        <button type="button" class="btn-alternar-foto" aria-label="Ver outra foto do produto" title="Ver outra foto">
-          ${iconeAlternarFoto}
+        <button type="button" class="btn-alternar-foto btn-anterior" aria-label="Foto anterior" title="Foto anterior">
+          ${iconeAnterior}
+        </button>
+        <button type="button" class="btn-alternar-foto btn-proxima" aria-label="Próxima foto" title="Próxima foto">
+          ${iconeProxima}
         </button>
         <div class="produto-fotos-dots" aria-hidden="true">
           <span class="dot ativo"></span>
@@ -78,7 +124,7 @@ function criarCardProduto(produto: Produto): HTMLElement {
       ` : ""}
     </div>
     <div class="produto-info">
-      <span class="produto-categoria">${produto.categoria}</span>
+      <span class="produto-categoria">${capitalizar(produto.categoria)}</span>
       <h2>${produto.nome}</h2>
       <p class="produto-descricao">${produto.descricao}</p>
       <p class="produto-preco">${formatarPreco(produto.preco)}</p>
@@ -88,15 +134,25 @@ function criarCardProduto(produto: Produto): HTMLElement {
   if (temSegundaFoto) {
     const fotos = [produto.imagem, produto.imagemCostas as string];
     const imagemEl = card.querySelector<HTMLImageElement>(".produto-imagem")!;
-    const botaoAlternar = card.querySelector<HTMLButtonElement>(".btn-alternar-foto")!;
+    const botaoAnterior = card.querySelector<HTMLButtonElement>(".btn-anterior")!;
+    const botaoProxima = card.querySelector<HTMLButtonElement>(".btn-proxima")!;
     const pontos = card.querySelectorAll<HTMLSpanElement>(".dot");
     let indice = 0;
 
-    botaoAlternar.addEventListener("click", (evento: MouseEvent) => {
-      evento.stopPropagation();
-      indice = (indice + 1) % fotos.length;
+    function mudarFoto(delta: number): void {
+      indice = (indice + delta + fotos.length) % fotos.length;
       imagemEl.src = fotos[indice];
       pontos.forEach((ponto, i) => ponto.classList.toggle("ativo", i === indice));
+    }
+
+    botaoAnterior.addEventListener("click", (evento: MouseEvent) => {
+      evento.stopPropagation();
+      mudarFoto(-1);
+    });
+
+    botaoProxima.addEventListener("click", (evento: MouseEvent) => {
+      evento.stopPropagation();
+      mudarFoto(1);
     });
   }
 
@@ -116,13 +172,14 @@ function abrirModal(produto: Produto): void {
   modalIndice = 0;
 
   modalImagem.alt = produto.nome;
-  modalCategoria.textContent = produto.categoria;
+  modalCategoria.textContent = capitalizar(produto.categoria);
   modalNome.textContent = produto.nome;
   modalDescricao.textContent = produto.descricao;
   modalPreco.textContent = formatarPreco(produto.preco);
 
   const temVariasFotos = modalFotos.length > 1;
-  modalBtnAlternar.hidden = !temVariasFotos;
+  modalBtnAnterior.hidden = !temVariasFotos;
+  modalBtnProxima.hidden = !temVariasFotos;
   modalDots.hidden = !temVariasFotos;
 
   atualizarFotoModal();
@@ -143,10 +200,13 @@ modalOverlay.addEventListener("click", (evento: MouseEvent) => {
   }
 });
 
-modalBtnAlternar.addEventListener("click", () => {
-  modalIndice = (modalIndice + 1) % modalFotos.length;
+function mudarFotoModal(delta: number): void {
+  modalIndice = (modalIndice + delta + modalFotos.length) % modalFotos.length;
   atualizarFotoModal();
-});
+}
+
+modalBtnAnterior.addEventListener("click", () => mudarFotoModal(-1));
+modalBtnProxima.addEventListener("click", () => mudarFotoModal(1));
 
 document.addEventListener("keydown", (evento: KeyboardEvent) => {
   if (evento.key === "Escape" && !modalOverlay.hidden) {
@@ -172,10 +232,9 @@ function renderizarProdutos(lista: Produto[]): void {
 
 function aplicarFiltros(): void {
   const termo = campoBusca.value.trim().toLowerCase();
-  const categoria = seletorCategoria.value;
 
   const filtrado = catalogo.filter((produto) => {
-    const bateCategoria = categoria === "todas" || produto.categoria === categoria;
+    const bateCategoria = categoriaAtual === "todas" || produto.categoria === categoriaAtual;
     const bateBusca = produto.nome.toLowerCase().includes(termo);
     return bateCategoria && bateBusca;
   });
@@ -196,6 +255,5 @@ async function iniciar(): Promise<void> {
 }
 
 campoBusca.addEventListener("input", aplicarFiltros);
-seletorCategoria.addEventListener("change", aplicarFiltros);
 
 iniciar();
