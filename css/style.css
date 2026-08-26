@@ -198,9 +198,38 @@ body {
   cursor: not-allowed;
 }
 
-/* Hero: carrossel de fotos da coleção */
+/* Hero simples: usado em páginas secundárias (ex: /como-fiz), só texto */
 
 .hero {
+  position: relative;
+  text-align: center;
+  padding: 3rem 1.5rem 2.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(2px 2px at 15% 30%, var(--dourado) 0%, transparent 60%),
+    radial-gradient(2px 2px at 80% 20%, var(--dourado) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 60% 60%, var(--dourado-claro) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 30% 75%, var(--dourado-claro) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 90% 65%, var(--dourado) 0%, transparent 60%),
+    linear-gradient(180deg, var(--azul-lavanda-claro), var(--branco-nuvem));
+}
+
+.hero h1 {
+  font-family: var(--fonte-logo);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  margin: 0 0 0.5rem;
+  color: var(--azul-petroleo-escuro);
+}
+
+.hero p {
+  margin: 0;
+  color: var(--azul-petroleo);
+  opacity: 0.85;
+}
+
+/* Hero-carrossel: usado na home, fotos da coleção */
+
+.hero-carrossel {
   position: relative;
   overflow: hidden;
   /* height: clamp() em vez de aspect-ratio + max-height — combinar os dois faz o
@@ -235,7 +264,7 @@ body {
 }
 
 /* escurece a base da foto pra manter o texto legível por cima */
-.hero::after {
+.hero-carrossel::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -561,99 +590,170 @@ body {
   font-size: 0.95rem;
 }
 
-/* Modal de detalhes do produto */
+/* Página de detalhes do produto (produto/index.html) */
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(44, 64, 93, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem;
-  z-index: 100;
+.produto-pagina {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
 }
 
-.modal-overlay[hidden] {
+.produto-breadcrumb {
+  font-size: 0.85rem;
+  opacity: 0.65;
+  margin: 0 0 1.25rem;
+}
+
+.produto-breadcrumb a {
+  color: var(--azul-petroleo-escuro);
+}
+
+.produto-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* [hidden] do navegador e a regra acima têm a mesma especificidade — sem
+   isso aqui, "display: flex" vence e o hidden="" não esconde nada */
+.produto-detalhe[hidden] {
   display: none;
 }
 
-.modal-caixa {
-  position: relative;
-  background: white;
-  border-radius: var(--raio);
-  box-shadow: var(--sombra-hover);
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow-y: auto;
-  cursor: default;
-}
-
-.modal-imagem-wrapper {
+.produto-detalhe-galeria {
   position: relative;
   overflow: hidden;
+  border-radius: var(--raio);
   background: var(--azul-lavanda-claro);
 }
 
-.modal-imagem-wrapper img {
+.produto-detalhe-galeria .produto-imagem {
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
   display: block;
 }
 
-@media (min-width: 640px) {
-  .modal-caixa {
-    display: flex;
+@media (min-width: 700px) {
+  .produto-detalhe {
+    flex-direction: row;
+    align-items: flex-start;
   }
 
-  .modal-imagem-wrapper {
-    width: 45%;
+  .produto-detalhe-galeria {
+    width: 48%;
     flex-shrink: 0;
+    position: sticky;
+    top: 90px;
   }
 
-  .modal-info {
-    width: 55%;
+  .produto-detalhe-info {
+    width: 52%;
   }
 }
 
-.modal-fechar {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--azul-petroleo-escuro);
-  font-size: 1.4rem;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 3;
-}
-
-.modal-info {
-  padding: 2rem;
-}
-
-.modal-info h2 {
+.produto-detalhe-info h1 {
   font-family: var(--fonte-logo);
-  font-size: 1.85rem;
-  margin: 0.6rem 0 1rem;
+  font-size: 2rem;
+  margin: 0.6rem 0 0.75rem;
   color: var(--azul-petroleo-escuro);
 }
 
-.modal-info .produto-descricao {
-  font-size: 1.05rem;
-  line-height: 1.6;
-  opacity: 0.85;
+.produto-detalhe-info .produto-preco {
+  font-size: 1.6rem;
   margin-bottom: 1.25rem;
 }
 
-.modal-info .produto-preco {
-  font-size: 1.6rem;
+.produto-quantidade-acao {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.produto-quantidade {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--azul-lavanda);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.produto-quantidade button {
+  width: 38px;
+  height: 42px;
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  color: var(--azul-petroleo-escuro);
+  cursor: pointer;
+}
+
+.produto-quantidade button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.produto-quantidade span {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.btn-comprar {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  background: var(--azul-petroleo-escuro);
+  color: white;
+  font-family: var(--fonte-corpo);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.produto-detalhe-descricao h2 {
+  font-family: var(--fonte-logo);
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+  color: var(--azul-petroleo-escuro);
+}
+
+.produto-detalhe-descricao .produto-descricao {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.produto-tamanhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.tamanho-opcao {
+  min-width: 42px;
+  padding: 0.5rem 0.7rem;
+  font-family: var(--fonte-corpo);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--azul-petroleo-escuro);
+  background: white;
+  border: 1px solid var(--azul-lavanda);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.tamanho-opcao:hover {
+  border-color: var(--azul-petroleo);
+}
+
+.tamanho-opcao.selecionado {
+  background: var(--azul-petroleo-escuro);
+  border-color: var(--azul-petroleo-escuro);
+  color: white;
 }
 
 /* Vídeo (página /como-fiz) */
@@ -741,12 +841,6 @@ footer {
     height: 36px;
   }
 
-  .modal-fechar {
-    width: 40px;
-    height: 40px;
-    font-size: 1.6rem;
-  }
-
   .confianca {
     padding: 1.25rem 1rem;
   }
@@ -773,7 +867,7 @@ footer {
     padding: 0.75rem 0.7rem 0.85rem;
   }
 
-  .produto-categoria {
+  .produto-card .produto-categoria {
     font-size: 0.62rem;
     padding: 0.15rem 0.5rem;
     margin-bottom: 0.4rem;
@@ -784,7 +878,7 @@ footer {
     margin-bottom: 0.25rem;
   }
 
-  .produto-descricao {
+  .produto-card .produto-descricao {
     font-size: 0.75rem;
     line-height: 1.35;
     margin-bottom: 0.5rem;
@@ -795,11 +889,11 @@ footer {
     overflow: hidden;
   }
 
-  .produto-preco {
+  .produto-card .produto-preco {
     font-size: 0.95rem;
   }
 
-  .hero {
+  .hero-carrossel {
     height: clamp(420px, 133vw, 520px);
   }
 
@@ -821,16 +915,15 @@ footer {
     scroll-margin-top: 150px;
   }
 
-  .modal-info {
-    padding: 1.25rem;
+  .produto-pagina {
+    padding: 1rem 1rem 3rem;
   }
 
-  .modal-info h2 {
+  .produto-detalhe-info h1 {
     font-size: 1.5rem;
-    margin-top: 0.3rem;
   }
 
-  .modal-info .produto-preco {
+  .produto-detalhe-info .produto-preco {
     font-size: 1.35rem;
   }
 }

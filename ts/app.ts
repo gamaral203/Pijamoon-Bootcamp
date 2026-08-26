@@ -1,14 +1,3 @@
-interface Produto {
-  id: string;
-  nome: string;
-  categoria: string;
-  preco: number;
-  descricao: string;
-  imagem: string;
-  imagemCostas?: string;
-  focoHero?: number;
-}
-
 const containerProdutos = document.getElementById("produtos") as HTMLDivElement;
 const campoBusca = document.getElementById("busca") as HTMLInputElement;
 const statusBusca = document.getElementById("status") as HTMLParagraphElement;
@@ -22,21 +11,8 @@ const categoriasDropdown = document.getElementById("categoriasDropdown") as HTML
 const categoriasTrigger = document.getElementById("categoriasTrigger") as HTMLButtonElement;
 const categoriasMenu = document.getElementById("categoriasMenu") as HTMLDivElement;
 
-const modalOverlay = document.getElementById("modalOverlay") as HTMLDivElement;
-const modalFechar = document.getElementById("modalFechar") as HTMLButtonElement;
-const modalImagem = document.getElementById("modalImagem") as HTMLImageElement;
-const modalBtnAnterior = document.getElementById("modalBtnAnterior") as HTMLButtonElement;
-const modalBtnProxima = document.getElementById("modalBtnProxima") as HTMLButtonElement;
-const modalDots = document.getElementById("modalDots") as HTMLDivElement;
-const modalCategoria = document.getElementById("modalCategoria") as HTMLSpanElement;
-const modalNome = document.getElementById("modalNome") as HTMLHeadingElement;
-const modalDescricao = document.getElementById("modalDescricao") as HTMLParagraphElement;
-const modalPreco = document.getElementById("modalPreco") as HTMLParagraphElement;
-
 let catalogo: Produto[] = [];
 let categoriaAtual = "todas";
-let modalFotos: string[] = [];
-let modalIndice = 0;
 
 let heroIndice = 0;
 let heroTimer: number | undefined;
@@ -102,22 +78,6 @@ heroDots.addEventListener("click", (evento: MouseEvent) => {
     iniciarAutoplayHero();
   }
 });
-
-async function carregarProdutos(): Promise<Produto[]> {
-  const resposta = await fetch("data/products.json");
-  if (!resposta.ok) {
-    throw new Error(`Falha ao carregar catálogo: ${resposta.status}`);
-  }
-  return resposta.json();
-}
-
-function formatarPreco(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function capitalizar(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
 
 function fecharDropdownCategorias(): void {
   categoriasMenu.classList.remove("aberto");
@@ -227,63 +187,12 @@ function criarCardProduto(produto: Produto): HTMLElement {
     });
   }
 
-  card.addEventListener("click", () => abrirModal(produto));
+  card.addEventListener("click", () => {
+    window.location.href = `produto/index.html?id=${encodeURIComponent(produto.id)}`;
+  });
 
   return card;
 }
-
-function atualizarFotoModal(): void {
-  modalImagem.src = modalFotos[modalIndice];
-  const pontos = modalDots.querySelectorAll<HTMLSpanElement>(".dot");
-  pontos.forEach((ponto, i) => ponto.classList.toggle("ativo", i === modalIndice));
-}
-
-function abrirModal(produto: Produto): void {
-  modalFotos = produto.imagemCostas ? [produto.imagem, produto.imagemCostas] : [produto.imagem];
-  modalIndice = 0;
-
-  modalImagem.alt = produto.nome;
-  modalCategoria.textContent = capitalizar(produto.categoria);
-  modalNome.textContent = produto.nome;
-  modalDescricao.textContent = produto.descricao;
-  modalPreco.textContent = formatarPreco(produto.preco);
-
-  const temVariasFotos = modalFotos.length > 1;
-  modalBtnAnterior.hidden = !temVariasFotos;
-  modalBtnProxima.hidden = !temVariasFotos;
-  modalDots.hidden = !temVariasFotos;
-
-  atualizarFotoModal();
-
-  modalOverlay.hidden = false;
-  modalFechar.focus();
-}
-
-function fecharModal(): void {
-  modalOverlay.hidden = true;
-}
-
-modalFechar.addEventListener("click", fecharModal);
-
-modalOverlay.addEventListener("click", (evento: MouseEvent) => {
-  if (evento.target === modalOverlay) {
-    fecharModal();
-  }
-});
-
-function mudarFotoModal(delta: number): void {
-  modalIndice = (modalIndice + delta + modalFotos.length) % modalFotos.length;
-  atualizarFotoModal();
-}
-
-modalBtnAnterior.addEventListener("click", () => mudarFotoModal(-1));
-modalBtnProxima.addEventListener("click", () => mudarFotoModal(1));
-
-document.addEventListener("keydown", (evento: KeyboardEvent) => {
-  if (evento.key === "Escape" && !modalOverlay.hidden) {
-    fecharModal();
-  }
-});
 
 function renderizarProdutos(lista: Produto[]): void {
   containerProdutos.innerHTML = "";

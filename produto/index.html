@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produto — Pijamoon</title>
+  <meta name="description" content="Detalhes do pijama Pijamoon: fotos, tamanhos e preço.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="site-header-top">
+      <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
+        <svg class="logo-svg" viewBox="0 0 230 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <circle cx="6" cy="8" r="1.6" fill="#E8C878"/>
+          <circle cx="49" cy="6" r="1.3" fill="#E8C878"/>
+          <circle cx="47" cy="44" r="1.5" fill="#E8C878"/>
+          <path d="M42 26 A18 18 0 1 1 22 7 A14 14 0 0 0 42 26 Z" fill="#E8C878"/>
+          <text x="62" y="37" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="28" fill="#3B5478">Pijamoon</text>
+        </svg>
+      </a>
+      <div class="header-centro"></div>
+
+      <div class="header-direita">
+        <nav>
+          <a href="../index.html">Voltar pra loja</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="produto-pagina">
+    <p class="produto-breadcrumb" id="breadcrumb"></p>
+
+    <section class="produto-detalhe" id="detalheConteudo" aria-label="Detalhes do produto">
+      <div class="produto-imagem-wrapper produto-detalhe-galeria">
+        <img id="detalheImagem" src="" alt="" class="produto-imagem">
+
+        <button type="button" class="btn-alternar-foto btn-anterior" id="detalheBtnAnterior" hidden aria-label="Foto anterior" title="Foto anterior">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 6 9 12 15 18"></polyline>
+          </svg>
+        </button>
+        <button type="button" class="btn-alternar-foto btn-proxima" id="detalheBtnProxima" hidden aria-label="Próxima foto" title="Próxima foto">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 6 15 12 9 18"></polyline>
+          </svg>
+        </button>
+
+        <div class="produto-fotos-dots" id="detalheDots" hidden aria-hidden="true"></div>
+      </div>
+
+      <div class="produto-detalhe-info">
+        <span class="produto-categoria" id="detalheCategoria"></span>
+        <h1 id="detalheNome"></h1>
+        <p class="produto-preco" id="detalhePreco"></p>
+
+        <div class="produto-tamanhos" id="detalheTamanhos" role="group" aria-label="Tamanhos disponíveis"></div>
+
+        <div class="produto-quantidade-acao">
+          <div class="produto-quantidade" role="group" aria-label="Quantidade">
+            <button type="button" id="qtdMenos" aria-label="Diminuir quantidade">&minus;</button>
+            <span id="qtdValor">1</span>
+            <button type="button" id="qtdMais" aria-label="Aumentar quantidade">+</button>
+          </div>
+
+          <button type="button" class="btn-comprar" disabled title="Compra ainda não implementada — fora do escopo deste desafio">
+            Comprar
+          </button>
+        </div>
+
+        <div class="produto-detalhe-descricao">
+          <h2>Descrição</h2>
+          <p class="produto-descricao" id="detalheDescricao"></p>
+        </div>
+      </div>
+    </section>
+
+    <p class="erro" id="detalheErro" hidden>Produto não encontrado. <a href="../index.html">Voltar pra loja</a>.</p>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
+  </footer>
+
+  <script src="../js/shared.js" defer></script>
+  <script src="../js/produto.js" defer></script>
+</body>
+</html>
