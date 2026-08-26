@@ -57,6 +57,36 @@
     <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
   </footer>
 
+  <div class="modal-overlay" id="modalOverlay" hidden>
+    <div class="modal-caixa" role="dialog" aria-modal="true" aria-labelledby="modalNome">
+      <button type="button" class="modal-fechar" id="modalFechar" aria-label="Fechar">&times;</button>
+
+      <div class="produto-imagem-wrapper modal-imagem-wrapper">
+        <img id="modalImagem" src="" alt="" class="produto-imagem">
+
+        <button type="button" class="btn-alternar-foto" id="modalBtnAlternar" hidden aria-label="Ver outra foto do produto" title="Ver outra foto">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4v5h5"/>
+            <path d="M20 20v-5h-5"/>
+            <path d="M5 15a7 7 0 0 0 12.9 3.1M19 9A7 7 0 0 0 6.1 5.9"/>
+          </svg>
+        </button>
+
+        <div class="produto-fotos-dots" id="modalDots" hidden aria-hidden="true">
+          <span class="dot ativo"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+
+      <div class="modal-info">
+        <span class="produto-categoria" id="modalCategoria"></span>
+        <h2 id="modalNome"></h2>
+        <p class="produto-descricao" id="modalDescricao"></p>
+        <p class="produto-preco" id="modalPreco"></p>
+      </div>
+    </div>
+  </div>
+
   <script src="js/app.js" defer></script>
 </body>
 </html>
