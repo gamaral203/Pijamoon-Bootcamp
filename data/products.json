@@ -3,60 +3,66 @@
     "id": "pijama-estrelas-xadrez",
     "nome": "Pijama Estrelas de Xadrez",
     "categoria": "alcinha",
-    "preco": 89.90,
+    "preco": 89.9,
     "descricao": "Conjunto de alcinha e short em xadrez azul lavanda com estrelinhas rosa, leve como uma noite de céu limpo.",
     "imagem": "img/produtos/ALCINHA1.jpg",
     "imagemCostas": "img/produtos/ALCINHA1.2.jpg",
-    "focoHero": 32
+    "focoHero": 32,
+    "tamanhos": ["P", "M", "G", "GG"]
   },
   {
     "id": "pijama-canela-aconchego",
     "nome": "Pijama Canela Aconchego",
     "categoria": "americano",
-    "preco": 94.90,
+    "preco": 94.9,
     "descricao": "Regata e short canelados em caramelo, com acabamento cru — simples, macio e confortável pra qualquer noite quente.",
     "imagem": "img/produtos/SIMPLES1.jpg",
     "imagemCostas": "img/produtos/SIMPLES1.2.jpg",
-    "focoHero": 30
+    "focoHero": 30,
+    "tamanhos": ["P", "M", "G", "GG"]
   },
   {
     "id": "pijama-jardim-encantado",
     "nome": "Pijama Jardim Encantado",
     "categoria": "calça",
-    "preco": 119.90,
+    "preco": 119.9,
     "descricao": "Camiseta manga curta e calça comprida com estampa de florzinhas coloridas — a calça extra mantém o pé quentinho nas noites mais frias.",
     "imagem": "img/produtos/DECALCA1.jpg",
     "imagemCostas": "img/produtos/DECALCA1.2.jpg",
-    "focoHero": 34
+    "focoHero": 34,
+    "tamanhos": ["P", "M", "G", "GG"]
   },
   {
     "id": "pijama-laco-de-lua",
     "nome": "Pijama Laço de Lua",
     "categoria": "camisa",
-    "preco": 109.90,
+    "preco": 109.9,
     "descricao": "Camisa de botão e short com estampa de laçinhos pretos sobre fundo claro — um clássico atemporal pra dormir com estilo.",
     "imagem": "img/produtos/AMERICANO1.jpg",
     "imagemCostas": "img/produtos/AMERICANO1.2.jpg",
-    "focoHero": 30
+    "focoHero": 30,
+    "tamanhos": ["P", "M", "G", "GG"]
   },
   {
     "id": "camisola-limonada",
     "nome": "Camisola Limonada",
     "categoria": "camisola",
-    "preco": 79.90,
+    "preco": 79.9,
     "descricao": "Camisola de alcinha rosa com estampa de limões, fresquinha e leve — perfeita pras noites mais quentes.",
     "imagem": "img/produtos/CAMISOLA1.jpg",
     "imagemCostas": "img/produtos/CAMISOLA1.2.jpg",
-    "focoHero": 42
+    "focoHero": 42,
+    "tamanhos": ["P", "M", "G", "GG"]
   },
   {
     "id": "pijama-poa-dos-sonhos",
     "nome": "Pijama Poá dos Sonhos",
     "categoria": "alcinha",
-    "preco": 89.90,
+    "preco": 89.9,
     "descricao": "Regata e short lilás de poá branco, com detalhes em rosa — doce e confortável como um cochilo de tarde.",
     "imagem": "img/produtos/PRODUTO1.1.jpg",
     "imagemCostas": "img/produtos/PRODUTO1.2.jpg",
-    "focoHero": 50
+    "focoHero": 50,
+    "tamanhos": ["P", "M", "G", "GG"]
   }
 ]
