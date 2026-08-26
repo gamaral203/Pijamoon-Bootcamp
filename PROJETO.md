@@ -57,14 +57,16 @@ PijamoonBootCamp/
 ├── index.html            ← vitrine (Claude escreve, Gabriel valida)
 ├── produto/index.html    ← página de detalhes do produto (?id=...)
 ├── login/index.html      ← login simulado (localStorage, sem servidor)
-├── carrinho/index.html   ← carrinho + finalizar compra (fictício)
+├── carrinho/index.html   ← carrinho (itens, quantidade, ir pro checkout)
+├── checkout/index.html   ← endereço + pagamento simulado (cartão/Pix)
 ├── css/style.css
 ├── ts/shared.ts          ← Produto, carregarProdutos, formatarPreco, capitalizar,
 │                            estado de usuário/carrinho, atualizarHeaderConta
 ├── ts/app.ts             ← lógica da vitrine (hero, busca, filtro, grade)
 ├── ts/produto.ts         ← lógica da página de detalhes + adicionar ao carrinho
 ├── ts/login.ts           ← lógica do login simulado
-├── ts/carrinho.ts        ← lógica do carrinho e checkout fictício
+├── ts/carrinho.ts        ← lógica do carrinho (itens, quantidade, ir pro checkout)
+├── ts/checkout.ts        ← lógica do checkout (endereço, pagamento, confirmar)
 ├── js/                   ← gerado pelo tsc a partir de ts/, não editar à mão
 ├── data/products.json    ← catálogo (6 produtos)
 ├── img/produtos/         ← fotos de frente e costas de cada produto
@@ -117,6 +119,12 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
 **Botão "Comprar agora" (26/08):** Gabriel notou que nem todo cliente quer passar pelo carrinho — às vezes é mais direto ir logo pra compra. A página de produto agora tem dois botões: **"Adicionar ao carrinho"** (contorno, secundário — guarda o item e continua navegando) e **"Comprar agora"** (sólido, primário — guarda o item com o tamanho/quantidade escolhidos e já leva direto pro carrinho, pronto pra finalizar). Reaproveita 100% da lógica que já existia (mesma função de salvar no carrinho, mesma página de carrinho com o bloqueio de login) — só muda o que acontece depois de guardar o item.
 
 **Decisão explícita do Gabriel (25/08): hospedagem pública fica pra depois**, quando o resto estiver pronto — ele avalia que não é difícil e prefere continuar iterando na loja antes. Risco assumido conscientemente: só descobrir problemas de hospedagem/fetch-hospedado perto do prazo. Claude não deve insistir nisso de novo a menos que o prazo (01/09 17h59) esteja se aproximando perigosamente.
+
+**Nome do usuário no cabeçalho + checkout com endereço/pagamento simulado (26/08):** duas coisas pedidas pelo Gabriel:
+  - Nome de quem está logado agora aparece ao lado do ícone de conta (antes só dava pra ver passando o mouse no tooltip). Some no mobile pra não apertar o cabeçalho.
+  - "Finalizar compra" no carrinho deixou de finalizar ali direto — agora leva pra uma página nova, `checkout/index.html`, com formulário de endereço de entrega (CEP, rua, número, complemento, bairro, cidade, UF — nenhum campo validado de verdade, é simulação) e escolha de pagamento (cartão de crédito ou Pix, com QR code fake e código copia-e-cola). "Confirmar pagamento" limpa o carrinho e mostra a tela de sucesso, que saiu do carrinho e passou a viver só ali.
+  - Testado com Playwright (login persistindo entre páginas, troca cartão/Pix, botão de copiar Pix, guard rails de login/carrinho vazio, mobile 375px sem overflow) — nenhum bug funcional real encontrado no fluxo de login (a suspeita inicial de Gabriel não se confirmou, já funcionava certo).
+  - **Três casos do mesmo bug de CSS encontrados e corrigidos** (já visto antes em `.produto-detalhe[hidden]`): `.checkout-grid`, `.checkout-layout` e `.produto-fotos-dots` declaravam `display` sem a exceção pro atributo `[hidden]`, então o elemento continuava visível por baixo mesmo "escondido". Bom exemplo pra citar no vídeo de "erro real que só apareceu testando de verdade, não só lendo o código".
 
 **Ainda falta (obrigatório):** publicar a loja (GitHub Pages ou similar), gravar o vídeo (incluindo rodar o Lighthouse **ao vivo** de novo na hora da gravação — o que já foi feito foi só preparação/correção prévia) e montar `/como-fiz`. Teste em celular real já foi feito via servidor local na rede Wi-Fi (26/08) — layout mobile validado e aprovado por Gabriel.
 
