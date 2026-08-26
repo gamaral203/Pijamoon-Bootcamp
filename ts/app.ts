@@ -5,6 +5,7 @@ interface Produto {
   preco: number;
   descricao: string;
   imagem: string;
+  imagemCostas?: string;
 }
 
 const containerProdutos = document.getElementById("produtos") as HTMLDivElement;
@@ -41,8 +42,18 @@ function criarCardProduto(produto: Produto): HTMLElement {
   card.className = "produto-card";
   card.dataset.categoria = produto.categoria;
 
+  const temSegundaFoto = Boolean(produto.imagemCostas);
+
   card.innerHTML = `
-    <img src="${produto.imagem}" alt="${produto.nome}" loading="lazy">
+    <div class="produto-imagem-wrapper${temSegundaFoto ? " com-fotos" : ""}">
+      <img src="${produto.imagem}" alt="${produto.nome}" loading="lazy" class="produto-imagem">
+      ${temSegundaFoto ? `
+        <div class="produto-fotos-dots" aria-hidden="true">
+          <span class="dot ativo"></span>
+          <span class="dot"></span>
+        </div>
+      ` : ""}
+    </div>
     <div class="produto-info">
       <span class="produto-categoria">${produto.categoria}</span>
       <h2>${produto.nome}</h2>
@@ -50,6 +61,20 @@ function criarCardProduto(produto: Produto): HTMLElement {
       <p class="produto-preco">${formatarPreco(produto.preco)}</p>
     </div>
   `;
+
+  if (temSegundaFoto) {
+    const fotos = [produto.imagem, produto.imagemCostas as string];
+    const imagemEl = card.querySelector<HTMLImageElement>(".produto-imagem")!;
+    const pontos = card.querySelectorAll<HTMLSpanElement>(".dot");
+    let indice = 0;
+
+    imagemEl.title = "Clique para ver a foto de costas";
+    imagemEl.addEventListener("click", () => {
+      indice = (indice + 1) % fotos.length;
+      imagemEl.src = fotos[indice];
+      pontos.forEach((ponto, i) => ponto.classList.toggle("ativo", i === indice));
+    });
+  }
 
   return card;
 }

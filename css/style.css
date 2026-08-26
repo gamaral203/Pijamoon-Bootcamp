@@ -41,8 +41,9 @@ body {
   border-bottom: 1px solid rgba(59, 84, 120, 0.12);
 }
 
-.logo-img {
-  height: 48px;
+.logo-svg {
+  height: 40px;
+  width: auto;
   display: block;
 }
 
@@ -170,7 +171,8 @@ body {
   box-shadow: var(--sombra-hover);
 }
 
-.produto-card .produto-imagem-wrapper {
+.produto-imagem-wrapper {
+  position: relative;
   overflow: hidden;
 }
 
@@ -185,6 +187,34 @@ body {
 
 .produto-card:hover img {
   transform: scale(1.04);
+}
+
+.produto-imagem-wrapper.com-fotos .produto-imagem {
+  cursor: pointer;
+}
+
+.produto-fotos-dots {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.produto-fotos-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+  transition: background 0.15s ease;
+}
+
+.produto-fotos-dots .dot.ativo {
+  background: var(--dourado);
 }
 
 .produto-info {
