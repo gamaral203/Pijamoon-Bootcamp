@@ -29,7 +29,8 @@ Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lig
 - **Sem framework.** TypeScript é permitido (compila para JS puro via `tsc`, sem bundler). Justificativa: nota é pela explicação, não pelo stack; vanilla/TS é mais fácil de defender linha por linha numa call.
 - **Catálogo em `products.json` real, sem banco de dados.** Foi cogitado usar banco real (professor teria liberado verbalmente), mas decidimos seguir o que está escrito no documento oficial do desafio para não arriscar os 20 pontos do critério "Loja no ar". Se Gabriel confirmar a exceção por escrito com o professor, reavaliar.
 - **Não usar os outros projetos Pijamoon como referência** (`pijamoon-catalogo`, `pijamoon`, `pijamoon-react` — repositórios reais e distintos do Gabriel). Este projeto é isolado, construído do zero.
-- **Escopo evoluiu além do básico (atualizado 26/08).** O plano original era "básico primeiro, sem carrinho/checkout/extras", mas ao longo do desenvolvimento Gabriel pediu e foram adicionados: modal de detalhes do produto (foto ampliada + descrição completa), navegação entre foto de frente/costas, dropdown de categorias no cabeçalho, ícones decorativos de conta/carrinho (sem função ainda — pensados como base pro checkout, que ele quer fazer depois), carrossel de fotos no hero (autoplay, setas, dots, ponto de foco por foto via campo `focoHero` em `products.json`) e uma faixa de selos de confiança (frete/pagamento/segurança/suporte) entre o hero e a grade de produtos. Carrinho/checkout de verdade continuam para depois, não são item pontuado no PDF oficial.
+- **Escopo evoluiu além do básico (atualizado 26/08).** O plano original era "básico primeiro, sem carrinho/checkout/extras", mas ao longo do desenvolvimento Gabriel pediu e foram adicionados: página de detalhes do produto com foto ampliada, descrição completa e tamanhos (P/M/G/GG), navegação entre foto de frente/costas, dropdown de categorias no cabeçalho, ícones decorativos de conta/carrinho (sem função ainda — pensados como base pro checkout, que ele quer fazer depois), carrossel de fotos no hero (autoplay, setas, dots, ponto de foco por foto via campo `focoHero` em `products.json`) e uma faixa de selos de confiança (frete/pagamento/segurança/suporte) entre o hero e a grade de produtos. Carrinho/checkout de verdade continuam para depois, não são item pontuado no PDF oficial.
+- **Detalhe do produto é página própria, não modal (atualizado 26/08).** Começou como modal (popup por cima da vitrine), mas Gabriel pediu uma transição de página de verdade, tipo loja real. Virou `produto/index.html?id=...` — segue o mesmo padrão multi-página que já existia em `/como-fiz`. `ts/shared.ts` guarda o que os dois scripts (`app.ts` da vitrine e `produto.ts` da página de detalhe) precisam em comum (buscar catálogo, formatar preço, etc.), carregado antes de cada um via `<script>` — sem bundler, sem import/export, só ordem de carregamento.
 - **Produtos:** catálogo com 6 pijamas reais (fotos de frente e costas cada). Categorias são por **tipo de corte da peça** (não mais frio/calor): `alcinha`, `americano`, `calça`, `camisa`, `camisola` — batem com os nomes dos arquivos de foto que Gabriel enviou.
 - **Identidade visual definida:** logo/hero real já enviado por Gabriel — ilustração de uma lua crescente com rosto dormindo sobre nuvens, estrelas douradas, pantufas, máscara de dormir e xícara de chocolate quente. Clima aconchegante/noturno/sonhador.
   - Paleta aproximada: azul lavanda `#9AAFCC`–`#B8C7E0` (céu), dourado/creme `#E8C878`–`#F0D9A0` (estrelas/lua), branco `#F5F5F2` (nuvens), azul petróleo escuro `#3B5478` (logotipo/texto).
@@ -47,9 +48,12 @@ Na prática: depois de cada trecho/arquivo relevante, Claude explica o "porquê"
 ```
 PijamoonBootCamp/
 ├── index.html            ← vitrine (Claude escreve, Gabriel valida)
+├── produto/index.html    ← página de detalhes do produto (?id=...)
 ├── css/style.css
-├── ts/app.ts             ← fonte TypeScript
-├── js/app.js             ← gerado pelo tsc, não editar à mão
+├── ts/shared.ts          ← Produto, carregarProdutos, formatarPreco, capitalizar
+├── ts/app.ts             ← lógica da vitrine (hero, busca, filtro, grade)
+├── ts/produto.ts         ← lógica da página de detalhes
+├── js/                   ← gerado pelo tsc a partir de ts/, não editar à mão
 ├── data/products.json    ← catálogo (6 produtos)
 ├── img/produtos/         ← fotos de frente e costas de cada produto
 ├── como-fiz/index.html   ← vídeo ainda não embutido (iframe vazio)
@@ -83,6 +87,10 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
   - As fotos de frente das 6 fotos são retrato (900×1350) e o hero é bem mais largo que alto, então só uma faixa fina de cada foto fica visível; cada produto ganhou um campo `focoHero` (0-100, altura do corte) calibrado a dedo pra mostrar rosto + pijama juntos na maioria das fotos.
 
 **Bug de catálogo corrigido (26/08):** as fotos de "Pijama Canela Aconchego" (regata caramelo) e "Pijama Laço de Lua" (camisa de laçinhos) estavam trocadas em `products.json` — cada produto mostrava a foto do outro. Não tinha relação com o carrossel; afetava a grade toda. Corrigido trocando os caminhos `imagem`/`imagemCostas` de volta pro produto certo.
+
+**Modal virou página de produto de verdade (26/08):** o clique no card agora navega pra `produto/index.html?id=...` (mesmo padrão de página separada que `/como-fiz` já usava) em vez de abrir um popup por cima da vitrine. A página tem breadcrumb, galeria com frente/costas, tamanhos (P/M/G/GG, campo `tamanhos` no `products.json`), seletor de quantidade e botão "Comprar" desabilitado (mesmo motivo dos ícones de conta/carrinho — sem checkout ainda). Todo o código do modal foi removido; lógica compartilhada entre a vitrine e a página de produto ficou em `ts/shared.ts`. Dois bugs achados testando essa mudança:
+  - `/como-fiz` reaproveitava a classe `.hero` que virou o carrossel — quebrou o hero de texto simples dessa página. Corrigido separando em `.hero` (texto simples, páginas secundárias) e `.hero-carrossel` (fotos, só na home).
+  - A tela de "produto não encontrado" não escondia o layout por baixo: o atributo `hidden` do HTML e a regra `.produto-detalhe { display: flex }` têm a mesma especificidade CSS, e a regra vencia. Corrigido com `.produto-detalhe[hidden] { display: none }`.
 
 **Decisão explícita do Gabriel (25/08): hospedagem pública fica pra depois**, quando o resto estiver pronto — ele avalia que não é difícil e prefere continuar iterando na loja antes. Risco assumido conscientemente: só descobrir problemas de hospedagem/fetch-hospedado perto do prazo. Claude não deve insistir nisso de novo a menos que o prazo (01/09 17h59) esteja se aproximando perigosamente.
 
