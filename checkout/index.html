@@ -54,7 +54,7 @@
   <main class="carrinho-pagina checkout-pagina">
     <h1>Finalizar compra</h1>
 
-    <div id="checkoutConteudo" class="checkout-layout">
+    <form id="checkoutConteudo" class="checkout-layout">
       <div class="checkout-formularios">
 
         <section class="login-caixa checkout-secao">
@@ -62,15 +62,15 @@
           <div class="checkout-grid">
             <label class="login-campo checkout-campo-cep">
               CEP
-              <input type="text" id="campoCep" placeholder="00000-000" autocomplete="postal-code">
+              <input type="text" id="campoCep" placeholder="00000-000" autocomplete="postal-code" required>
             </label>
             <label class="login-campo checkout-campo-largo">
               Endereço
-              <input type="text" id="campoRua" placeholder="Rua, avenida..." autocomplete="address-line1">
+              <input type="text" id="campoRua" placeholder="Rua, avenida..." autocomplete="address-line1" required>
             </label>
             <label class="login-campo">
               Número
-              <input type="text" id="campoNumero" placeholder="123" autocomplete="off">
+              <input type="text" id="campoNumero" placeholder="123" autocomplete="off" required>
             </label>
             <label class="login-campo checkout-campo-largo">
               Complemento
@@ -78,15 +78,15 @@
             </label>
             <label class="login-campo">
               Bairro
-              <input type="text" id="campoBairro" placeholder="Bairro" autocomplete="off">
+              <input type="text" id="campoBairro" placeholder="Bairro" autocomplete="off" required>
             </label>
             <label class="login-campo">
               Cidade
-              <input type="text" id="campoCidade" placeholder="Cidade" autocomplete="address-level2">
+              <input type="text" id="campoCidade" placeholder="Cidade" autocomplete="address-level2" required>
             </label>
             <label class="login-campo">
               Estado
-              <select id="campoEstado" autocomplete="address-level1">
+              <select id="campoEstado" autocomplete="address-level1" required>
                 <option value="">UF</option>
                 <option value="AC">AC — Acre</option>
                 <option value="AL">AL — Alagoas</option>
@@ -137,19 +137,19 @@
           <div class="checkout-grid" id="painelCartao">
             <label class="login-campo checkout-campo-largo">
               Número do cartão
-              <input type="text" id="campoNumeroCartao" placeholder="0000 0000 0000 0000" autocomplete="cc-number">
+              <input type="text" id="campoNumeroCartao" placeholder="0000 0000 0000 0000" autocomplete="cc-number" required>
             </label>
             <label class="login-campo checkout-campo-largo">
               Nome impresso no cartão
-              <input type="text" id="campoNomeCartao" placeholder="Como está no cartão" autocomplete="cc-name">
+              <input type="text" id="campoNomeCartao" placeholder="Como está no cartão" autocomplete="cc-name" required>
             </label>
             <label class="login-campo">
               Validade
-              <input type="text" id="campoValidadeCartao" placeholder="MM/AA" autocomplete="cc-exp">
+              <input type="text" id="campoValidadeCartao" placeholder="MM/AA" autocomplete="cc-exp" required>
             </label>
             <label class="login-campo">
               CVV
-              <input type="text" id="campoCvvCartao" placeholder="000" autocomplete="cc-csc">
+              <input type="text" id="campoCvvCartao" placeholder="000" autocomplete="cc-csc" required>
             </label>
           </div>
 
@@ -189,10 +189,10 @@
           <span>Total</span>
           <strong id="checkoutTotal"></strong>
         </div>
-        <button type="button" class="btn-comprar" id="botaoConfirmarPagamento">Confirmar pagamento</button>
+        <button type="submit" class="btn-comprar" id="botaoConfirmarPagamento">Confirmar pagamento</button>
         <p class="checkout-nota">Simulação pra este desafio — nenhum dado real é enviado ou processado.</p>
       </aside>
-    </div>
+    </form>
 
     <div class="carrinho-sucesso" id="checkoutSucesso" hidden>
       <p>Pedido confirmado! 🎉</p>

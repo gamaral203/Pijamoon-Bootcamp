@@ -9,12 +9,18 @@
     const metodoPix = document.getElementById("metodoPix");
     const painelCartao = document.getElementById("painelCartao");
     const painelPix = document.getElementById("painelPix");
+    const camposCartao = painelCartao.querySelectorAll("input");
     const botaoCopiarPix = document.getElementById("botaoCopiarPix");
     const codigoPix = document.getElementById("codigoPix");
-    const botaoConfirmarPagamento = document.getElementById("botaoConfirmarPagamento");
     function alternarMetodoPagamento() {
         painelCartao.hidden = !metodoCartao.checked;
         painelPix.hidden = !metodoPix.checked;
+        // display:none não tira campo da validação do form (só "disabled" tira) —
+        // por isso alterna o "required" junto, senão o Pix ficava bloqueado pedindo
+        // dados de cartão que nem aparecem na tela
+        camposCartao.forEach((campo) => {
+            campo.required = metodoCartao.checked;
+        });
     }
     metodoCartao.addEventListener("change", alternarMetodoPagamento);
     metodoPix.addEventListener("change", alternarMetodoPagamento);
@@ -58,7 +64,10 @@
         checkoutSucesso.hidden = false;
         atualizarHeaderConta(RAIZ);
     }
-    botaoConfirmarPagamento.addEventListener("click", confirmarPagamento);
+    checkoutConteudo.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+        confirmarPagamento();
+    });
     async function iniciarCheckout() {
         atualizarHeaderConta(RAIZ);
         if (!obterUsuario()) {

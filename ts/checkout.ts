@@ -1,7 +1,7 @@
 (function () {
   const RAIZ = "../";
 
-  const checkoutConteudo = document.getElementById("checkoutConteudo") as HTMLDivElement;
+  const checkoutConteudo = document.getElementById("checkoutConteudo") as HTMLFormElement;
   const checkoutSucesso = document.getElementById("checkoutSucesso") as HTMLDivElement;
   const checkoutItens = document.getElementById("checkoutItens") as HTMLDivElement;
   const checkoutTotal = document.getElementById("checkoutTotal") as HTMLElement;
@@ -10,15 +10,21 @@
   const metodoPix = document.getElementById("metodoPix") as HTMLInputElement;
   const painelCartao = document.getElementById("painelCartao") as HTMLDivElement;
   const painelPix = document.getElementById("painelPix") as HTMLDivElement;
+  const camposCartao = painelCartao.querySelectorAll<HTMLInputElement>("input");
 
   const botaoCopiarPix = document.getElementById("botaoCopiarPix") as HTMLButtonElement;
   const codigoPix = document.getElementById("codigoPix") as HTMLElement;
 
-  const botaoConfirmarPagamento = document.getElementById("botaoConfirmarPagamento") as HTMLButtonElement;
-
   function alternarMetodoPagamento(): void {
     painelCartao.hidden = !metodoCartao.checked;
     painelPix.hidden = !metodoPix.checked;
+
+    // display:none não tira campo da validação do form (só "disabled" tira) —
+    // por isso alterna o "required" junto, senão o Pix ficava bloqueado pedindo
+    // dados de cartão que nem aparecem na tela
+    camposCartao.forEach((campo) => {
+      campo.required = metodoCartao.checked;
+    });
   }
 
   metodoCartao.addEventListener("change", alternarMetodoPagamento);
@@ -69,7 +75,10 @@
     atualizarHeaderConta(RAIZ);
   }
 
-  botaoConfirmarPagamento.addEventListener("click", confirmarPagamento);
+  checkoutConteudo.addEventListener("submit", (evento: SubmitEvent) => {
+    evento.preventDefault();
+    confirmarPagamento();
+  });
 
   async function iniciarCheckout(): Promise<void> {
     atualizarHeaderConta(RAIZ);
