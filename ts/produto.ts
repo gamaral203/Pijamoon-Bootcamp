@@ -77,8 +77,12 @@
     const alvo = evento.target as HTMLElement;
     if (!alvo.classList.contains("tamanho-opcao")) return;
 
+    // clicar de novo no tamanho já selecionado DESMARCA ele (fica sem
+    // nenhum selecionado); clicar em outro troca a seleção, como antes
+    const jaSelecionado = alvo.classList.contains("selecionado");
+
     detalheTamanhos.querySelectorAll<HTMLButtonElement>(".tamanho-opcao").forEach((botao) => {
-      botao.classList.toggle("selecionado", botao === alvo);
+      botao.classList.toggle("selecionado", !jaSelecionado && botao === alvo);
     });
   });
 
@@ -111,19 +115,36 @@
    * direto pro carrinho, pra quem já sabe que quer aquele produto.
    * ============================================================ */
 
-  /** Lê o tamanho selecionado na tela e chama adicionarAoCarrinho (de shared.ts). */
-  function guardarProdutoAtualNoCarrinho(): void {
-    if (!produtoAtual) return;
+  /**
+   * Lê o tamanho selecionado na tela e chama adicionarAoCarrinho (de
+   * shared.ts). Se o produto tem tamanhos e nenhum está selecionado
+   * (possível agora que dá pra desmarcar clicando de novo), não adiciona
+   * nada — só avisa visualmente (a caixa de tamanhos "treme") e devolve
+   * false, pra quem chamou saber que não deu certo.
+   */
+  function guardarProdutoAtualNoCarrinho(): boolean {
+    if (!produtoAtual) return false;
 
     const tamanhoSelecionado = detalheTamanhos.querySelector<HTMLButtonElement>(".tamanho-opcao.selecionado");
-    const tamanho = tamanhoSelecionado?.dataset.tamanho ?? "único";
+    const precisaEscolherTamanho = (produtoAtual.tamanhos?.length ?? 0) > 0 && !tamanhoSelecionado;
 
+    if (precisaEscolherTamanho) {
+      detalheTamanhos.classList.remove("erro");
+      // força o navegador a "esquecer" que a animação já rodou, senão clicar
+      // duas vezes seguidas sem escolher tamanho não tremeria na segunda vez
+      void detalheTamanhos.offsetWidth;
+      detalheTamanhos.classList.add("erro");
+      return false;
+    }
+
+    const tamanho = tamanhoSelecionado?.dataset.tamanho ?? "único";
     adicionarAoCarrinho(produtoAtual.id, tamanho, quantidade);
     atualizarHeaderConta(RAIZ); // atualiza o número no ícone do carrinho no cabeçalho
+    return true;
   }
 
   botaoAdicionar.addEventListener("click", () => {
-    guardarProdutoAtualNoCarrinho();
+    if (!guardarProdutoAtualNoCarrinho()) return;
 
     // feedback rápido no próprio botão ("Adicionado ✓" por 1.2s) em vez de
     // navegar pra algum lugar — o cliente continua na mesma página
@@ -137,7 +158,7 @@
   });
 
   botaoComprarAgora.addEventListener("click", () => {
-    guardarProdutoAtualNoCarrinho();
+    if (!guardarProdutoAtualNoCarrinho()) return;
     window.location.href = `${RAIZ}carrinho/index.html`;
   });
 

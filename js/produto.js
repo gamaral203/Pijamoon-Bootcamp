@@ -66,8 +66,11 @@
         const alvo = evento.target;
         if (!alvo.classList.contains("tamanho-opcao"))
             return;
+        // clicar de novo no tamanho já selecionado DESMARCA ele (fica sem
+        // nenhum selecionado); clicar em outro troca a seleção, como antes
+        const jaSelecionado = alvo.classList.contains("selecionado");
         detalheTamanhos.querySelectorAll(".tamanho-opcao").forEach((botao) => {
-            botao.classList.toggle("selecionado", botao === alvo);
+            botao.classList.toggle("selecionado", !jaSelecionado && botao === alvo);
         });
     });
     /* ============================================================
@@ -94,17 +97,34 @@
      * cliente pode estar só comparando produtos), "Comprar agora" já leva
      * direto pro carrinho, pra quem já sabe que quer aquele produto.
      * ============================================================ */
-    /** Lê o tamanho selecionado na tela e chama adicionarAoCarrinho (de shared.ts). */
+    /**
+     * Lê o tamanho selecionado na tela e chama adicionarAoCarrinho (de
+     * shared.ts). Se o produto tem tamanhos e nenhum está selecionado
+     * (possível agora que dá pra desmarcar clicando de novo), não adiciona
+     * nada — só avisa visualmente (a caixa de tamanhos "treme") e devolve
+     * false, pra quem chamou saber que não deu certo.
+     */
     function guardarProdutoAtualNoCarrinho() {
         if (!produtoAtual)
-            return;
+            return false;
         const tamanhoSelecionado = detalheTamanhos.querySelector(".tamanho-opcao.selecionado");
+        const precisaEscolherTamanho = (produtoAtual.tamanhos?.length ?? 0) > 0 && !tamanhoSelecionado;
+        if (precisaEscolherTamanho) {
+            detalheTamanhos.classList.remove("erro");
+            // força o navegador a "esquecer" que a animação já rodou, senão clicar
+            // duas vezes seguidas sem escolher tamanho não tremeria na segunda vez
+            void detalheTamanhos.offsetWidth;
+            detalheTamanhos.classList.add("erro");
+            return false;
+        }
         const tamanho = tamanhoSelecionado?.dataset.tamanho ?? "único";
         adicionarAoCarrinho(produtoAtual.id, tamanho, quantidade);
         atualizarHeaderConta(RAIZ); // atualiza o número no ícone do carrinho no cabeçalho
+        return true;
     }
     botaoAdicionar.addEventListener("click", () => {
-        guardarProdutoAtualNoCarrinho();
+        if (!guardarProdutoAtualNoCarrinho())
+            return;
         // feedback rápido no próprio botão ("Adicionado ✓" por 1.2s) em vez de
         // navegar pra algum lugar — o cliente continua na mesma página
         const textoOriginal = botaoAdicionar.textContent;
@@ -116,7 +136,8 @@
         }, 1200);
     });
     botaoComprarAgora.addEventListener("click", () => {
-        guardarProdutoAtualNoCarrinho();
+        if (!guardarProdutoAtualNoCarrinho())
+            return;
         window.location.href = `${RAIZ}carrinho/index.html`;
     });
     /* ============================================================

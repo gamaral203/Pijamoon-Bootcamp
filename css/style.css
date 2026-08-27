@@ -889,6 +889,18 @@ body {
   margin-bottom: 1.25rem;
 }
 
+/* avisa "escolha um tamanho" quando tenta adicionar ao carrinho sem
+   nenhum tamanho selecionado (agora que dá pra desmarcar) */
+.produto-tamanhos.erro {
+  animation: tamanho-tremida 0.4s ease;
+}
+
+@keyframes tamanho-tremida {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
 .tamanho-opcao {
   min-width: 42px;
   padding: 0.5rem 0.7rem;
@@ -972,7 +984,9 @@ body {
 .login-campo input,
 .login-campo select {
   font-family: var(--fonte-corpo);
-  font-size: 0.95rem;
+  /* precisa ser >= 16px — abaixo disso o Safari/iOS dá zoom automático ao
+     focar o campo (mesmo motivo já corrigido no campo de busca do cabeçalho) */
+  font-size: 16px;
   font-weight: 400;
   padding: 0.65rem 0.9rem;
   border: 1px solid var(--cor-borda);
