@@ -23,6 +23,7 @@
 </head>
 <body>
 
+  <!-- mesmo cabeçalho das outras páginas internas (ver produto/index.html) -->
   <header class="site-header">
     <div class="site-header-top">
       <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
@@ -65,12 +66,19 @@
   </header>
 
   <main class="login-pagina">
+    <!--
+      Formulário simulado: o submit (ver ts/login.ts) não valida a senha
+      contra nada — só confere se nome e e-mail foram preenchidos, salva os
+      dois no localStorage e manda pra "próxima página" (ver o parâmetro
+      "next" na URL, usado quando o carrinho/checkout mandam pra cá).
+    -->
     <form class="login-caixa" id="formLogin">
       <h1>Entrar</h1>
       <p class="login-aviso">
         Login simulado pra fins do desafio — fica salvo só no seu navegador, sem servidor nem senha real por trás.
       </p>
 
+      <!-- só aparece se já tiver alguém logado quando a página carrega -->
       <p class="login-ja-logado" id="avisoJaLogado" hidden></p>
 
       <label class="login-campo">
@@ -83,6 +91,7 @@
         <input type="email" id="campoEmail" name="email" required autocomplete="email">
       </label>
 
+      <!-- existe pra parecer um login de verdade, mas não é lida/validada em lugar nenhum do código -->
       <label class="login-campo">
         Senha
         <input type="password" id="campoSenha" name="senha" required autocomplete="current-password">

@@ -1,5 +1,18 @@
 "use strict";
+/**
+ * app.ts — lógica da vitrine (index.html): hero em carrossel, busca, filtro
+ * por categoria e a grade de produtos.
+ *
+ * Tudo dentro de um único (function () { ... })() (uma IIFE — "Immediately
+ * Invoked Function Expression") pra não vazar nenhuma dessas variáveis/
+ * funções pro escopo global. Sem isso, se produto.ts também tivesse uma
+ * variável chamada "catalogo", o TypeScript reclamaria de redeclaração —
+ * mesmo os dois nunca rodando na mesma página — porque sem bundler/módulos
+ * ele compila todo o projeto como se fosse um escopo só. Só shared.ts fica
+ * de fato global, de propósito, porque as outras páginas precisam dele.
+ */
 (function () {
+    // --- Referências aos elementos do HTML que este script manipula ---
     const containerProdutos = document.getElementById("produtos");
     const campoBusca = document.getElementById("busca");
     const statusBusca = document.getElementById("status");
@@ -10,10 +23,15 @@
     const categoriasDropdown = document.getElementById("categoriasDropdown");
     const categoriasTrigger = document.getElementById("categoriasTrigger");
     const categoriasMenu = document.getElementById("categoriasMenu");
+    // catalogo guarda os produtos depois do fetch; categoriaAtual é o filtro ativo no momento
     let catalogo = [];
     let categoriaAtual = "todas";
     let heroIndice = 0;
     let heroTimer;
+    /* ============================================================
+     * Hero: carrossel de fotos da coleção
+     * ============================================================ */
+    /** Mostra o slide de índice "indice" (com wraparound: -1 vira o último, N vira o 0). */
     function irParaSlideHero(indice) {
         const slides = heroSlides.querySelectorAll(".hero-slide");
         const dots = heroDots.querySelectorAll(".dot");
@@ -29,6 +47,8 @@
             heroTimer = undefined;
         }
     }
+    /** Liga o autoplay (troca de slide a cada 5s) — a menos que o usuário tenha
+     *  pedido pro sistema operacional reduzir movimento (acessibilidade). */
     function iniciarAutoplayHero() {
         pararAutoplayHero();
         const prefereReduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -36,10 +56,19 @@
             return;
         heroTimer = window.setInterval(() => irParaSlideHero(heroIndice + 1), 5000);
     }
+    /** Troca de slide manualmente (seta anterior/próxima) e reinicia o timer do autoplay. */
     function mudarSlideHero(delta) {
         irParaSlideHero(heroIndice + delta);
         iniciarAutoplayHero();
     }
+    /**
+     * Gera os slides do hero a partir do próprio catálogo — usa a mesma foto
+     * "imagem" de cada produto, sem duplicar caminho nenhum. Cada foto ganha
+     * seu ponto de corte vertical (object-position) via o campo focoHero do
+     * products.json, porque as fotos são em retrato e o hero é bem mais largo
+     * que alto — sem isso, a foto ficaria cortada mostrando só o rosto ou só
+     * os pés, dependendo da pose.
+     */
     function renderizarHero(produtos) {
         if (produtos.length === 0)
             return;
@@ -57,6 +86,7 @@
     }
     heroBtnAnterior.addEventListener("click", () => mudarSlideHero(-1));
     heroBtnProxima.addEventListener("click", () => mudarSlideHero(1));
+    // clique numa bolinha do carrossel pula direto pra aquele slide
     heroDots.addEventListener("click", (evento) => {
         const alvo = evento.target;
         if (!alvo.classList.contains("dot"))
@@ -68,10 +98,14 @@
             iniciarAutoplayHero();
         }
     });
+    /* ============================================================
+     * Dropdown de categorias (cabeçalho)
+     * ============================================================ */
     function fecharDropdownCategorias() {
         categoriasMenu.classList.remove("aberto");
         categoriasTrigger.setAttribute("aria-expanded", "false");
     }
+    /** Marca a categoria clicada como ativa, fecha o menu e refiltra a grade. */
     function selecionarCategoria(categoria) {
         categoriaAtual = categoria;
         const botoes = categoriasMenu.querySelectorAll(".categoria-link");
@@ -79,6 +113,14 @@
         fecharDropdownCategorias();
         aplicarFiltros();
     }
+    /**
+     * Monta os botões de categoria dinamicamente a partir do que existe no
+     * catálogo (Set remove duplicatas) — se um produto novo com categoria nova
+     * for adicionado no products.json, o botão dela aparece sozinho, sem
+     * precisar editar HTML nenhum. É o mesmo princípio de "catálogo separado
+     * do front" aplicado aqui: o menu de categorias reflete os dados, não o
+     * contrário.
+     */
     function popularCategorias(produtos) {
         const categorias = [...new Set(produtos.map((p) => p.categoria))].sort();
         for (const categoria of categorias) {
@@ -98,11 +140,15 @@
         const aberto = categoriasMenu.classList.toggle("aberto");
         categoriasTrigger.setAttribute("aria-expanded", String(aberto));
     });
+    // clicar fora do dropdown fecha ele
     document.addEventListener("click", (evento) => {
         if (!categoriasDropdown.contains(evento.target)) {
             fecharDropdownCategorias();
         }
     });
+    /* ============================================================
+     * Grade de produtos
+     * ============================================================ */
     const iconeAnterior = `
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 6 9 12 15 18"></polyline>
@@ -113,6 +159,12 @@
       <polyline points="9 6 15 12 9 18"></polyline>
     </svg>
   `;
+    /**
+     * Monta o <article> de um produto na grade: foto, categoria, nome,
+     * descrição e preço. Se o produto tem foto de costas, também monta as
+     * setinhas e as bolinhas de trocar foto direto no card (sem precisar abrir
+     * a página de detalhes pra ver o produto de outro ângulo).
+     */
     function criarCardProduto(produto) {
         const card = document.createElement("article");
         card.className = "produto-card";
@@ -152,6 +204,9 @@
                 imagemEl.src = fotos[indice];
                 pontos.forEach((ponto, i) => ponto.classList.toggle("ativo", i === indice));
             }
+            // stopPropagation() é essencial aqui: o card inteiro tem um clique que
+            // abre a página do produto (ver mais abaixo) — sem isso, clicar na
+            // setinha de trocar foto também "clicaria" o card e navegaria embora
             botaoAnterior.addEventListener("click", (evento) => {
                 evento.stopPropagation();
                 mudarFoto(-1);
@@ -161,11 +216,13 @@
                 mudarFoto(1);
             });
         }
+        // clicar em qualquer lugar do card (fora das setinhas) navega pra página de detalhes
         card.addEventListener("click", () => {
             window.location.href = `produto/index.html?id=${encodeURIComponent(produto.id)}`;
         });
         return card;
     }
+    /** Limpa a grade e desenha um card por produto da lista — ou uma mensagem, se a lista vier vazia. */
     function renderizarProdutos(lista) {
         containerProdutos.innerHTML = "";
         if (lista.length === 0) {
@@ -178,6 +235,14 @@
         }
         statusBusca.textContent = `${lista.length} produto(s) encontrado(s).`;
     }
+    /* ============================================================
+     * Busca + filtro por categoria
+     * ============================================================ */
+    /**
+     * Aplica os dois filtros juntos (texto da busca E categoria selecionada)
+     * sobre o catálogo completo, e redesenha a grade com o resultado. Chamada
+     * toda vez que o usuário digita na busca ou troca de categoria.
+     */
     function aplicarFiltros() {
         const termo = campoBusca.value.trim().toLowerCase();
         const filtrado = catalogo.filter((produto) => {
@@ -187,6 +252,16 @@
         });
         renderizarProdutos(filtrado);
     }
+    /* ============================================================
+     * Inicialização da página
+     * ============================================================ */
+    /**
+     * Ponto de entrada: sincroniza o cabeçalho (login/carrinho/tema), busca o
+     * catálogo via fetch e, se der certo, monta o hero + categorias + grade.
+     * Se o fetch falhar (ex: rodando o arquivo direto sem servidor, ou
+     * products.json fora do ar), mostra uma mensagem de erro em vez de
+     * quebrar a página.
+     */
     async function iniciar() {
         atualizarHeaderConta();
         try {

@@ -1,5 +1,17 @@
 "use strict";
+/**
+ * produto.ts — lógica da página de detalhes de um produto (produto/index.html).
+ *
+ * A página não sabe de qual produto se trata até rodar: ela lê o "?id=..."
+ * da própria URL, procura esse id dentro do catálogo (o mesmo
+ * data/products.json que a vitrine usa) e desenha os detalhes na tela. É
+ * por isso que o link do card na vitrine (ver ts/app.ts) é sempre
+ * "produto/index.html?id=algum-id" — a página de produto é genérica, o "id"
+ * na URL que decide o que ela mostra.
+ */
 (function () {
+    // RAIZ = como voltar da pasta produto/ até a raiz do site, usado em todo
+    // caminho relativo (imagens, fetch do catálogo, links de navegação)
     const RAIZ = "../";
     const breadcrumb = document.getElementById("breadcrumb");
     const detalheConteudo = document.getElementById("detalheConteudo");
@@ -21,7 +33,12 @@
     let fotos = [];
     let indiceFoto = 0;
     let quantidade = 1;
+    // guarda o produto carregado pra "adicionar ao carrinho"/"comprar agora"
+    // saberem qual produto é, sem precisar buscar no catálogo de novo
     let produtoAtual = null;
+    /* ============================================================
+     * Galeria de fotos (frente/costas)
+     * ============================================================ */
     function atualizarFoto() {
         detalheImagem.src = fotos[indiceFoto];
         const pontos = detalheDots.querySelectorAll(".dot");
@@ -33,11 +50,18 @@
     }
     detalheBtnAnterior.addEventListener("click", () => mudarFoto(-1));
     detalheBtnProxima.addEventListener("click", () => mudarFoto(1));
+    /* ============================================================
+     * Tamanhos
+     * ============================================================ */
+    /** Desenha um botão por tamanho disponível (campo "tamanhos" do produto), com o primeiro pré-selecionado. */
     function renderizarTamanhos(tamanhos) {
         detalheTamanhos.innerHTML = (tamanhos ?? [])
             .map((tamanho, i) => `<button type="button" class="tamanho-opcao${i === 0 ? " selecionado" : ""}" data-tamanho="${tamanho}">${tamanho}</button>`)
             .join("");
     }
+    // um único listener no container (em vez de um por botão) porque os botões
+    // são recriados toda vez que renderizarTamanhos roda — delegar o clique pro
+    // pai evita ter que reconectar o evento sempre que o HTML é substituído
     detalheTamanhos.addEventListener("click", (evento) => {
         const alvo = evento.target;
         if (!alvo.classList.contains("tamanho-opcao"))
@@ -46,9 +70,12 @@
             botao.classList.toggle("selecionado", botao === alvo);
         });
     });
+    /* ============================================================
+     * Quantidade
+     * ============================================================ */
     function atualizarQuantidade() {
         qtdValor.textContent = String(quantidade);
-        qtdMenos.disabled = quantidade <= 1;
+        qtdMenos.disabled = quantidade <= 1; // não deixa ir abaixo de 1
     }
     qtdMenos.addEventListener("click", () => {
         quantidade = Math.max(1, quantidade - 1);
@@ -58,16 +85,28 @@
         quantidade += 1;
         atualizarQuantidade();
     });
+    /* ============================================================
+     * Adicionar ao carrinho / Comprar agora
+     * ============================================================
+     * Os dois botões fazem a MESMA coisa primeiro (guardar o produto atual,
+     * no tamanho escolhido, na quantidade escolhida) — só o que acontece
+     * DEPOIS é diferente: "Adicionar ao carrinho" continua na página (o
+     * cliente pode estar só comparando produtos), "Comprar agora" já leva
+     * direto pro carrinho, pra quem já sabe que quer aquele produto.
+     * ============================================================ */
+    /** Lê o tamanho selecionado na tela e chama adicionarAoCarrinho (de shared.ts). */
     function guardarProdutoAtualNoCarrinho() {
         if (!produtoAtual)
             return;
         const tamanhoSelecionado = detalheTamanhos.querySelector(".tamanho-opcao.selecionado");
         const tamanho = tamanhoSelecionado?.dataset.tamanho ?? "único";
         adicionarAoCarrinho(produtoAtual.id, tamanho, quantidade);
-        atualizarHeaderConta(RAIZ);
+        atualizarHeaderConta(RAIZ); // atualiza o número no ícone do carrinho no cabeçalho
     }
     botaoAdicionar.addEventListener("click", () => {
         guardarProdutoAtualNoCarrinho();
+        // feedback rápido no próprio botão ("Adicionado ✓" por 1.2s) em vez de
+        // navegar pra algum lugar — o cliente continua na mesma página
         const textoOriginal = botaoAdicionar.textContent;
         botaoAdicionar.textContent = "Adicionado ✓";
         botaoAdicionar.disabled = true;
@@ -80,6 +119,10 @@
         guardarProdutoAtualNoCarrinho();
         window.location.href = `${RAIZ}carrinho/index.html`;
     });
+    /* ============================================================
+     * Montagem da página a partir do produto encontrado
+     * ============================================================ */
+    /** Preenche toda a página (foto, nome, preço, tamanhos, descrição, breadcrumb) com os dados de um produto. */
     function renderizarProduto(produto) {
         produtoAtual = produto;
         fotos = produto.imagemCostas
@@ -93,6 +136,7 @@
         detalheDescricao.textContent = produto.descricao;
         renderizarTamanhos(produto.tamanhos);
         atualizarQuantidade();
+        // setas e bolinhas de foto só aparecem se o produto tiver as duas fotos (frente + costas)
         const temVariasFotos = fotos.length > 1;
         detalheBtnAnterior.hidden = !temVariasFotos;
         detalheBtnProxima.hidden = !temVariasFotos;
@@ -104,10 +148,17 @@
         breadcrumb.innerHTML = `<a href="../index.html">Início</a> / <span>${capitalizar(produto.categoria)}</span> / <span>${produto.nome}</span>`;
         document.title = `${produto.nome} — Pijamoon`;
     }
+    /** Esconde os detalhes do produto e mostra a mensagem de erro (ex: id inválido na URL). */
     function mostrarErro() {
         detalheConteudo.hidden = true;
         detalheErro.hidden = false;
     }
+    /**
+     * Ponto de entrada da página: lê o "id" da URL, busca o catálogo inteiro
+     * via fetch e procura o produto com esse id. Se não achar (id errado ou
+     * inexistente) ou se o fetch falhar, mostra a tela de erro em vez de
+     * deixar a página em branco.
+     */
     async function iniciarPaginaProduto() {
         atualizarHeaderConta(RAIZ);
         const parametros = new URLSearchParams(window.location.search);

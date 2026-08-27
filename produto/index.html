@@ -23,6 +23,10 @@
 </head>
 <body>
 
+  <!-- Mesmo cabeçalho de index.html, mas com header-centro vazio: essa
+       página não tem busca/dropdown de categorias, só logo + conta/carrinho/tema
+       + link de volta. Todo caminho aqui usa "../" porque estamos uma pasta
+       abaixo da raiz (produto/index.html). -->
   <header class="site-header">
     <div class="site-header-top">
       <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
@@ -65,9 +69,17 @@
   </header>
 
   <main class="produto-pagina">
+    <!--
+      Essa página não sabe de qual produto se trata até o JS rodar: ela lê o
+      "?id=..." da própria URL (ver ts/produto.ts) e preenche tudo abaixo —
+      breadcrumb, foto(s), nome, preço, tamanhos, descrição. É por isso que
+      quase todo elemento aqui começa vazio ou com texto genérico.
+    -->
     <p class="produto-breadcrumb" id="breadcrumb"></p>
 
+    <!-- some inteira (vira hidden) se o "id" da URL não bater com produto nenhum -->
     <section class="produto-detalhe" id="detalheConteudo" aria-label="Detalhes do produto">
+      <!-- galeria: 1 foto (frente) ou 2 (frente + costas, com setas/bolinhas) -->
       <div class="produto-imagem-wrapper produto-detalhe-galeria">
         <img id="detalheImagem" src="" alt="" class="produto-imagem">
 
@@ -90,6 +102,7 @@
         <h1 id="detalheNome"></h1>
         <p class="produto-preco" id="detalhePreco"></p>
 
+        <!-- um botão por tamanho, o primeiro pré-selecionado — gerado via JS a partir do campo "tamanhos" do produto -->
         <div class="produto-tamanhos" id="detalheTamanhos" role="group" aria-label="Tamanhos disponíveis"></div>
 
         <div class="produto-quantidade-acao">
@@ -99,11 +112,13 @@
             <button type="button" id="qtdMais" aria-label="Aumentar quantidade">+</button>
           </div>
 
+          <!-- guarda no carrinho e continua na página (dá feedback "Adicionado ✓" no próprio botão) -->
           <button type="button" class="btn-comprar btn-comprar-secundario" id="botaoAdicionar">
             Adicionar ao carrinho
           </button>
         </div>
 
+        <!-- guarda no carrinho e já navega pra lá — pra quem já sabe que quer comprar -->
         <button type="button" class="btn-comprar btn-comprar-agora" id="botaoComprarAgora">
           Comprar agora
         </button>
@@ -115,6 +130,7 @@
       </div>
     </section>
 
+    <!-- mostrada só quando o "id" da URL não existe no catálogo -->
     <p class="erro" id="detalheErro" hidden>Produto não encontrado. <a href="../index.html">Voltar pra loja</a>.</p>
   </main>
 

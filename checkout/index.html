@@ -23,6 +23,8 @@
 </head>
 <body>
 
+  <!-- mesmo cabeçalho das outras páginas internas; o link de "voltar" aqui
+       aponta pro carrinho (não pra home), já que é o passo anterior no fluxo -->
   <header class="site-header">
     <div class="site-header-top">
       <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
@@ -67,6 +69,12 @@
   <main class="carrinho-pagina checkout-pagina">
     <h1>Finalizar compra</h1>
 
+    <!--
+      Só chega até aqui quem está logado E tem item no carrinho (ts/checkout.ts
+      manda de volta pra login ou pro carrinho, respectivamente, senão). Tudo
+      abaixo é simulado: nenhum dado de endereço/cartão é enviado a lugar
+      nenhum — o "required" dos campos é só pra não deixar confirmar vazio.
+    -->
     <form id="checkoutConteudo" class="checkout-layout">
       <div class="checkout-formularios">
 
@@ -136,6 +144,7 @@
         <section class="login-caixa checkout-secao">
           <h2>Pagamento</h2>
 
+          <!-- alterna qual painel abaixo aparece (ver ts/checkout.ts, alternarMetodoPagamento) -->
           <div class="checkout-metodos" role="radiogroup" aria-label="Forma de pagamento">
             <label class="checkout-metodo">
               <input type="radio" name="pagamento" id="metodoCartao" checked>
@@ -147,6 +156,9 @@
             </label>
           </div>
 
+          <!-- campos aqui têm "required": o JS liga/desliga esse atributo
+               junto com a troca de método, senão o navegador bloqueava o
+               envio do form pedindo dados de cartão mesmo escondido -->
           <div class="checkout-grid" id="painelCartao">
             <label class="login-campo checkout-campo-largo">
               Número do cartão
@@ -166,6 +178,8 @@
             </label>
           </div>
 
+          <!-- QR code é só um desenho fixo em SVG (não é gerado de verdade a
+               partir do código Pix abaixo) — decorativo, pra parecer uma tela real de Pix -->
           <div class="checkout-pix" id="painelPix" hidden>
             <svg class="checkout-pix-qr" viewBox="0 0 100 100" role="img" aria-label="QR code fictício para pagamento via Pix">
               <rect width="100" height="100" fill="white"/>
@@ -187,6 +201,7 @@
               </g>
             </svg>
             <p>Escaneie o QR code com o app do seu banco, ou copie o código abaixo.</p>
+            <!-- código Pix "copia e cola" fictício (formato parecido com um real, mas fixo/fake) -->
             <div class="checkout-pix-codigo">
               <code id="codigoPix">00020126580014BR.GOV.BCB.PIX0136pijamoon@exemplo.com5204000053039865802BR5913Pijamoon Ltda6009Sao Paulo62070503***6304ABCD</code>
               <button type="button" id="botaoCopiarPix">Copiar</button>
@@ -195,6 +210,7 @@
         </section>
       </div>
 
+      <!-- resumo lateral: itens + total, montado via JS cruzando o carrinho salvo com o catálogo (ts/checkout.ts, renderizarResumo) -->
       <aside class="carrinho-resumo checkout-resumo">
         <h2>Resumo do pedido</h2>
         <div id="checkoutItens" class="checkout-itens"></div>
@@ -202,11 +218,13 @@
           <span>Total</span>
           <strong id="checkoutTotal"></strong>
         </div>
+        <!-- type="submit": aciona o evento "submit" do <form> acima, que dispara confirmarPagamento() -->
         <button type="submit" class="btn-comprar" id="botaoConfirmarPagamento">Confirmar pagamento</button>
         <p class="checkout-nota">Simulação pra este desafio — nenhum dado real é enviado ou processado.</p>
       </aside>
     </form>
 
+    <!-- troca de lugar com o form acima (via JS) quando o pagamento é "confirmado"; aqui é onde o carrinho é esvaziado de verdade -->
     <div class="carrinho-sucesso" id="checkoutSucesso" hidden>
       <p>Pedido confirmado! 🎉</p>
       <p class="carrinho-sucesso-nota">Isso é só uma simulação pra este desafio — nenhum pagamento real foi feito.</p>

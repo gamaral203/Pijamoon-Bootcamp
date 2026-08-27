@@ -1,4 +1,15 @@
+/**
+ * login.ts — lógica da página de login (login/index.html).
+ *
+ * Não existe senha validada de verdade em lugar nenhum: preencher qualquer
+ * nome e e-mail "loga" o visitante, porque este é um site estático sem
+ * servidor. O objetivo aqui não é segurança de verdade — é simular o FLUXO
+ * de "é preciso estar logado pra comprar" (pedido do desafio), sendo
+ * honesto de que é uma simulação. Numa loja real, isso seria substituído
+ * por um serviço de autenticação de verdade (ver a nota em ts/shared.ts).
+ */
 (function () {
+  // RAIZ = como voltar da pasta login/ até a raiz do site
   const RAIZ = "../";
 
   const formLogin = document.getElementById("formLogin") as HTMLFormElement;
@@ -6,12 +17,20 @@
   const campoEmail = document.getElementById("campoEmail") as HTMLInputElement;
   const avisoJaLogado = document.getElementById("avisoJaLogado") as HTMLParagraphElement;
 
+  /**
+   * Depois de logar, pra onde a pessoa deve ir? Se ela veio de "finalizar
+   * compra" no carrinho ou no checkout, a URL de login tem
+   * "?next=carrinho/index.html" (ou "?next=checkout/index.html") — assim
+   * ela volta pra terminar o que estava fazendo, em vez de cair na home e
+   * ter que navegar tudo de novo. Sem o parâmetro, o padrão é a home.
+   */
   function proximaPagina(): string {
     const parametros = new URLSearchParams(window.location.search);
     const next = parametros.get("next");
     return RAIZ + (next || "index.html");
   }
 
+  /** Se já tiver alguém logado, avisa (em vez de simplesmente deixar preencher o formulário de novo sem explicação). */
   function mostrarAvisoSeJaLogado(): void {
     const usuario = obterUsuario();
     if (!usuario) return;
@@ -26,11 +45,11 @@
   }
 
   formLogin.addEventListener("submit", (evento: SubmitEvent) => {
-    evento.preventDefault();
+    evento.preventDefault(); // não deixa o navegador recarregar a página (comportamento padrão de <form>)
 
     const nome = campoNome.value.trim();
     const email = campoEmail.value.trim();
-    if (!nome || !email) return;
+    if (!nome || !email) return; // required já bloqueia isso, é só uma segunda checagem
 
     salvarUsuario({ nome, email });
     window.location.href = proximaPagina();

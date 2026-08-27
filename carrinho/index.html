@@ -23,6 +23,8 @@
 </head>
 <body>
 
+  <!-- mesmo cabeçalho das outras páginas internas; o ícone de carrinho tem
+       a classe extra "ativo" pra indicar visualmente "você está aqui" -->
   <header class="site-header">
     <div class="site-header-top">
       <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
@@ -67,11 +69,13 @@
   <main class="carrinho-pagina">
     <h1>Seu carrinho</h1>
 
+    <!-- um dos dois abaixo aparece, nunca os dois — controlado via JS conforme o carrinho tem ou não itens -->
     <p class="carrinho-vazio" id="carrinhoVazio" hidden>
       Seu carrinho está vazio. <a href="../index.html">Ver produtos</a>.
     </p>
 
     <div id="carrinhoConteudo" hidden>
+      <!-- uma "linha" por item do carrinho é criada aqui via JS (ts/carrinho.ts, renderizarCarrinho) -->
       <div class="carrinho-lista" id="carrinhoLista"></div>
 
       <div class="carrinho-resumo">
@@ -80,10 +84,12 @@
           <strong id="carrinhoTotal"></strong>
         </div>
 
+        <!-- só aparece se ninguém estiver logado; o link já leva direto pro checkout depois de entrar -->
         <p class="carrinho-aviso-login" id="avisoLogin" hidden>
           Você precisa <a href="../login/index.html?next=checkout/index.html">entrar</a> pra finalizar a compra.
         </p>
 
+        <!-- se não tiver login, manda pra tela de login; se tiver, segue pro checkout (ver ts/carrinho.ts, finalizarCompra) -->
         <button type="button" class="btn-comprar" id="botaoFinalizar">Finalizar compra</button>
       </div>
     </div>

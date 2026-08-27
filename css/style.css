@@ -1,3 +1,29 @@
+/**
+ * style.css — folha de estilo única do site inteiro (todas as páginas
+ * carregam este mesmo arquivo). Sem framework CSS nenhum, tudo escrito à
+ * mão. Ordem das seções, de cima pra baixo:
+ *
+ *   1. :root / [data-tema="escuro"] — paleta de cores e "tokens" que trocam entre os dois temas
+ *   2. Cabeçalho (.site-header, busca, dropdown de categorias, ícones)
+ *   3. Hero simples (.hero) e hero-carrossel (.hero-carrossel) — ver a nota logo acima da definição de .hero
+ *   4. Faixa de confiança (.confianca-*)
+ *   5. Grade de produtos (.grid, .produto-card)
+ *   6. Página de detalhes do produto (.produto-pagina, .produto-detalhe-*)
+ *   7. Botões de tamanho (.tamanho-opcao) e botões de comprar (.btn-comprar*)
+ *   8. Página de login (.login-*)
+ *   9. Página de carrinho (.carrinho-*)
+ *  10. Página de checkout (.checkout-*)
+ *  11. Vídeo (/como-fiz) e rodapé
+ *  12. @media — todos os ajustes de responsivo/mobile ficam juntos no final,
+ *      não espalhados perto de cada seção
+ *
+ * Cores de marca (--dourado, --azul-lavanda...) são fixas nos dois temas.
+ * "Papéis" como fundo de página, fundo de card e cor de texto usam as
+ * variáveis --cor-* (--cor-fundo, --cor-superficie, --cor-texto...), que
+ * mudam de valor sozinhas no modo escuro — ver o bloco
+ * :root[data-tema="escuro"] logo abaixo do :root normal.
+ */
+
 :root {
   --azul-lavanda: #9AAFCC;
   --azul-lavanda-claro: #B8C7E0;

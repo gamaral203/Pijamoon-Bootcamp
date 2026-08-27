@@ -23,6 +23,12 @@
 </head>
 <body>
 
+  <!--
+    Única página do site que não tem TS próprio — não precisa de nada
+    interativo além do botão de tema, então em vez de criar um "como-fiz.ts"
+    só pra isso, ela chama a função direto num scriptzinho aqui embaixo
+    (ver perto de </body>).
+  -->
   <header class="site-header">
     <div class="site-header-top">
       <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
@@ -50,6 +56,9 @@
   </header>
 
   <main class="loja">
+    <!-- classe "hero" (não "hero-carrossel"!) — é o hero simples de texto,
+         usado só em páginas secundárias; ver a nota no topo de css/style.css
+         sobre a diferença entre as duas classes -->
     <section class="hero">
       <h1>Como eu fiz a Pijamoon</h1>
       <p>Organização do código, headless commerce, AWS/cache, Lighthouse e onde entraria IA.</p>

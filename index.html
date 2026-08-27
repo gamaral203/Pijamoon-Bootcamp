@@ -25,6 +25,13 @@
 </head>
 <body>
 
+  <!--
+    Cabeçalho: logo, busca + dropdown de categorias (filtra a grade lá
+    embaixo, sem recarregar a página), e os ícones de tema/conta/carrinho.
+    Esse mesmo cabeçalho (com pequenas variações) se repete em todas as
+    outras páginas — não tem componente reutilizável porque o site não usa
+    framework nenhum, então cada página HTML tem sua própria cópia.
+  -->
   <header class="site-header">
     <div class="site-header-top">
       <a href="index.html" class="logo" aria-label="Pijamoon — página inicial">
@@ -57,11 +64,13 @@
       </div>
 
       <div class="header-direita">
+        <!-- ícone/tooltip trocam sozinhos (ver ts/shared.ts: atualizarBotaoTema) -->
         <button type="button" class="icone-header" id="botaoTema" title="Modo escuro" aria-label="Modo escuro">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
           </svg>
         </button>
+        <!-- texto/título/clique (entrar → login, ou virar "sair") trocam via JS, olhando se tem usuário salvo no localStorage -->
         <button type="button" class="icone-header" id="botaoConta" title="Entrar" aria-label="Entrar">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -69,6 +78,7 @@
           </svg>
         </button>
         <span class="conta-nome" id="contaNome" hidden></span>
+        <!-- badge some quando o carrinho está vazio; o número vem da soma das quantidades salvas -->
         <a href="carrinho/index.html" class="icone-header" aria-label="Carrinho">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
@@ -85,7 +95,14 @@
   </header>
 
   <main>
+    <!--
+      Hero: carrossel de fotos, montado inteiramente via JS (ts/app.ts,
+      função renderizarHero) a partir do próprio catálogo — as fotos aqui são
+      as MESMAS fotos "imagem" de cada produto, não tem foto duplicada em
+      lugar nenhum. Por isso as divs abaixo começam vazias.
+    -->
     <section class="hero-carrossel" aria-label="Destaque da coleção">
+      <!-- as <img class="hero-slide"> são inseridas aqui via JS -->
       <div class="hero-slides" id="heroSlides" aria-hidden="true"></div>
 
       <button type="button" class="hero-seta hero-seta-anterior" id="heroBtnAnterior" aria-label="Slide anterior">
@@ -105,9 +122,12 @@
         <a href="#produtos" class="hero-cta">Ver coleção ↓</a>
       </div>
 
+      <!-- bolinhas de navegação do carrossel, uma por foto — também via JS -->
       <div class="hero-dots" id="heroDots" aria-hidden="true"></div>
     </section>
 
+    <!-- Faixa de confiança: puramente decorativa/estática, os 4 itens estão
+         escritos direto no HTML porque não vêm do catálogo, são fixos -->
     <section class="confianca" aria-label="Vantagens da loja">
       <div class="confianca-grid">
         <div class="confianca-item">
@@ -165,7 +185,15 @@
       </div>
     </section>
 
+    <!--
+      Grade de produtos: só o esqueleto está aqui. Os cards de verdade são
+      criados via JS (ts/app.ts, criarCardProduto) depois do fetch em
+      data/products.json — é o requisito do desafio de não hardcodar produto
+      nenhum no HTML. O texto "Carregando produtos…" abaixo só aparece no
+      instante entre o HTML carregar e o fetch terminar.
+    -->
     <section class="loja" aria-label="Catálogo de produtos">
+      <!-- mensagem "N produto(s) encontrado(s)" / "nenhum encontrado", atualizada a cada busca/filtro -->
       <p id="status" role="status"></p>
 
       <div id="produtos" class="grid" aria-live="polite">
@@ -178,6 +206,8 @@
     <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
   </footer>
 
+  <!-- shared.js primeiro (define as funções que app.js usa), depois app.js — a
+       ordem importa porque não tem import/export, é tudo escopo global -->
   <script src="js/shared.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>
