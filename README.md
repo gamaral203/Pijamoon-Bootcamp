@@ -1,6 +1,6 @@
 # 🌙 Pijamoon
 
-Loja de pijamas — desafio **"Minha Loja no Ar"** de um bootcamp.
+Loja de pijamas — desafio **"Minha Loja no Ar"** do **AI/R Fellowship**, turma do Bootcamp **"AWS AI FDE for Commerce"**, promovida pela **AIR Academy** e o **Innovation Studio Digital Commerce**, com apoio da **AWS**.
 
 **🔗 Loja no ar:** https://drifd8sm57jac.cloudfront.net
 
@@ -26,7 +26,7 @@ Site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
 
 - HTML, CSS e TypeScript (compilado com `tsc`, sem bundler nem módulos)
 - Hospedado na AWS: **S3** (origem privada) + **CloudFront** (CDN), com Origin Access Control
-- Catálogo em `data/products.json`, sem banco de dados
+- Catálogo em `data/products.json` (migração pro Supabase planejada — ver `PROJETO.md`)
 
 ## Rodando localmente
 
