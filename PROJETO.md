@@ -23,7 +23,7 @@ Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lig
 - [ ] Vídeo auto-hospedado (+10) — decisão pendente.
 - [ ] Diagrama de arquitetura com BFF para app mobile (+10) — conceito já explicado a Gabriel, diagrama ainda não feito.
 - [x] Carrinho + checkout fictício (26/08) — carrinho persistido no navegador, login simulado obrigatório pra finalizar a compra. Ver seção própria em Decisões abaixo.
-- [ ] Dark mode — não iniciado.
+- [x] Dark mode (26/08) — alternável por um botão no cabeçalho, salvo no navegador, em todas as páginas.
 
 ## Decisões já tomadas
 
@@ -141,6 +141,13 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
   - **Atenção:** o S3 não sincroniza sozinho com o git. Depois de qualquer commit que mude arquivo do site, alguém precisa re-subir o(s) arquivo(s) mudado(s) pro bucket e rodar uma invalidação do CloudFront (`aws cloudfront create-invalidation --distribution-id ER9G66Y0YYVCL --paths "/*"`), senão o CloudFront serve a versão em cache antiga por até 24h.
 
 **Ideia futura anotada, não obrigatória (26/08):** Gabriel comentou que, se um dia o catálogo migrar pra um banco de dados de verdade (ex: Supabase, cogitado antes — ver decisão acima de manter `products.json` por enquanto), faria sentido ter uma área de **admin** pra cadastrar/editar produto sem mexer em código. Não faz sentido com o `products.json` atual (edição é direto no arquivo). Não construir agora — só registrar a ideia pra quando/se migrar pra banco real.
+
+**Dark mode implementado e testado (26/08):** botão no cabeçalho (ícone de lua/sol) alternável em todas as 6 páginas do site, salvo em `localStorage` (`pijamoon_tema`) e aplicado antes do CSS renderizar (script inline no `<head>` de cada página) pra não "piscar" claro e trocar pra escuro logo depois.
+  - **Arquitetura:** variáveis CSS "semânticas" (`--cor-fundo`, `--cor-superficie`, `--cor-texto`, `--cor-texto-forte`, `--cor-borda`, `--cor-botao-primario`...) que trocam de valor via `:root[data-tema="escuro"]`, em vez de duplicar regras CSS. Cores de marca fixas (dourado, azul-lavanda) continuam iguais nos dois temas — só o "papel" de fundo/superfície/texto muda. Selos com fundo dourado-claro (badges, categoria ativa, ícone de conta logado) mantêm o texto escuro fixo de propósito, sem variável, porque o fundo deles nunca escurece.
+  - **Toque temático:** no escuro, o botão de ação principal ("Comprar agora", "Entrar", tamanho selecionado) vira **dourado** em vez de azul-petróleo — combina com a estrela/lua da identidade visual. O gradiente do hero e o hero simples (`/como-fiz`) também viram um "céu noturno" mais escuro, com as mesmas estrelinhas douradas decorativas por cima.
+  - **Bug achado e corrigido:** o texto "Pijamoon" do logo tem a cor cravada como atributo `fill` dentro do SVG — ficava ilegível (azul bem escuro) sobre o cabeçalho escuro. Corrigido com uma regra CSS (`.logo-svg text { fill: var(--cor-texto-forte); }`), que vence o atributo do SVG.
+  - **Segundo bug achado:** o script que liga o botão de tema na página `/como-fiz` (a única sem `ts` próprio) usava `defer` num `<script>` inline — `defer` só tem efeito em `<script src="...">`, não em inline. O script rodava cedo demais e dava erro "`atualizarBotaoTema` não definida". Corrigido movendo a chamada pra dentro de um listener de `DOMContentLoaded`.
+  - Testado com Playwright: alternância, persistência entre páginas e reloads, e as 6 páginas × 2 larguras (375/1280) × 2 temas (24 combinações) sem overflow nem erro de console.
 
 **Ainda falta (obrigatório):** gravar o vídeo (incluindo rodar o Lighthouse **ao vivo** de novo na hora da gravação, contra a URL da AWS agora — o que já foi feito antes foi só preparação/correção local) e montar `/como-fiz` com o vídeo embutido. Teste em celular real já foi feito via servidor local na rede Wi-Fi (26/08) — layout mobile validado e aprovado por Gabriel.
 
