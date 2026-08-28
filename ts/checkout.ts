@@ -130,7 +130,7 @@
       return;
     }
 
-    const catalogo = await carregarProdutos(`${RAIZ}data/products.json`);
+    const catalogo = await carregarProdutos();
     renderizarResumo(catalogo);
   }
 

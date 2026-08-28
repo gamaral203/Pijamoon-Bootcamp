@@ -13,7 +13,7 @@
  * declarada naquele arquivo, ela provavelmente está aqui.
  */
 
-/** Formato de um produto no catálogo (data/products.json). */
+/** Formato de um produto no catálogo (tabela "produtos" no Supabase). */
 interface Produto {
   id: string;
   nome: string;
@@ -30,18 +30,49 @@ interface Produto {
 }
 
 /**
- * Busca o catálogo via fetch. "caminho" existe porque o mesmo arquivo
- * products.json é buscado de profundidades diferentes: a home busca
- * "data/products.json" (padrão), mas páginas dentro de uma subpasta (ex:
- * produto/index.html) precisam de "../data/products.json" — cada página
- * passa o caminho certo pra ela mesma.
+ * Catálogo migrado de data/products.json pra uma tabela no Supabase
+ * (ver supabase/schema.sql pro SQL que cria a tabela e insere os produtos).
+ *
+ * "supabase" (minúsculo, sem tipo) é o objeto global que o script do
+ * Supabase (carregado via CDN, ver a tag <script> antes de shared.js em
+ * cada página HTML) expõe em window.supabase. Como o projeto não instala o
+ * pacote @supabase/supabase-js via npm (isso puxaria um bundler junto), não
+ * tem os tipos oficiais — daí o "declare const ... any" abaixo, só pra
+ * avisar o TypeScript "essa variável existe em tempo de execução, confia".
  */
-async function carregarProdutos(caminho: string = "data/products.json"): Promise<Produto[]> {
-  const resposta = await fetch(caminho);
-  if (!resposta.ok) {
-    throw new Error(`Falha ao carregar catálogo: ${resposta.status}`);
+declare const supabase: { createClient: (url: string, chave: string) => any };
+
+const SUPABASE_URL = "https://jrnfwkdfmwahfjeokmsg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_iFNonCbS9HqC6xOTpAhrCA_aXKsCZ9A";
+
+const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/**
+ * Busca o catálogo inteiro na tabela "produtos" do Supabase. As colunas do
+ * banco usam snake_case (convenção do Postgres: imagem_costas, foco_hero),
+ * então aqui a gente "traduz" cada linha pro formato camelCase que o resto
+ * do código (interface Produto) espera — assim nenhum outro arquivo
+ * (app.ts, produto.ts, carrinho.ts, checkout.ts) precisou mudar uma linha
+ * sequer: pra eles, continua sendo só "uma lista de Produto".
+ */
+async function carregarProdutos(): Promise<Produto[]> {
+  const { data, error } = await clienteSupabase.from("produtos").select("*");
+
+  if (error) {
+    throw new Error(`Falha ao carregar catálogo: ${error.message}`);
   }
-  return resposta.json();
+
+  return (data ?? []).map((linha: Record<string, unknown>): Produto => ({
+    id: linha.id as string,
+    nome: linha.nome as string,
+    categoria: linha.categoria as string,
+    preco: linha.preco as number,
+    descricao: linha.descricao as string,
+    imagem: linha.imagem as string,
+    imagemCostas: (linha.imagem_costas as string) ?? undefined,
+    focoHero: (linha.foco_hero as number) ?? undefined,
+    tamanhos: (linha.tamanhos as string[]) ?? undefined,
+  }));
 }
 
 /** Formata um número em Real: 89.9 → "R$ 89,90". */

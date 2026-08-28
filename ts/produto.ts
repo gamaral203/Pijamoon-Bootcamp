@@ -216,7 +216,7 @@
     const id = parametros.get("id");
 
     try {
-      const produtos = await carregarProdutos(`${RAIZ}data/products.json`);
+      const produtos = await carregarProdutos();
       const produto = produtos.find((p) => p.id === id);
 
       if (!produto) {

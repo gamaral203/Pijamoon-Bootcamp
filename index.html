@@ -206,8 +206,11 @@
     <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
   </footer>
 
-  <!-- shared.js primeiro (define as funções que app.js usa), depois app.js — a
-       ordem importa porque não tem import/export, é tudo escopo global -->
+  <!-- cliente do Supabase via CDN (sem npm/bundler) — precisa vir antes do
+       shared.js, que já usa "supabase.createClient(...)" assim que carrega.
+       shared.js primeiro (define as funções que app.js usa), depois app.js —
+       a ordem importa porque não tem import/export, é tudo escopo global -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/shared.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>

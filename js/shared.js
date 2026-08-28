@@ -13,19 +13,33 @@
  * Se você abrir qualquer outro .ts e ver uma função sendo chamada sem estar
  * declarada naquele arquivo, ela provavelmente está aqui.
  */
+const SUPABASE_URL = "https://jrnfwkdfmwahfjeokmsg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_iFNonCbS9HqC6xOTpAhrCA_aXKsCZ9A";
+const clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /**
- * Busca o catálogo via fetch. "caminho" existe porque o mesmo arquivo
- * products.json é buscado de profundidades diferentes: a home busca
- * "data/products.json" (padrão), mas páginas dentro de uma subpasta (ex:
- * produto/index.html) precisam de "../data/products.json" — cada página
- * passa o caminho certo pra ela mesma.
+ * Busca o catálogo inteiro na tabela "produtos" do Supabase. As colunas do
+ * banco usam snake_case (convenção do Postgres: imagem_costas, foco_hero),
+ * então aqui a gente "traduz" cada linha pro formato camelCase que o resto
+ * do código (interface Produto) espera — assim nenhum outro arquivo
+ * (app.ts, produto.ts, carrinho.ts, checkout.ts) precisou mudar uma linha
+ * sequer: pra eles, continua sendo só "uma lista de Produto".
  */
-async function carregarProdutos(caminho = "data/products.json") {
-    const resposta = await fetch(caminho);
-    if (!resposta.ok) {
-        throw new Error(`Falha ao carregar catálogo: ${resposta.status}`);
+async function carregarProdutos() {
+    const { data, error } = await clienteSupabase.from("produtos").select("*");
+    if (error) {
+        throw new Error(`Falha ao carregar catálogo: ${error.message}`);
     }
-    return resposta.json();
+    return (data ?? []).map((linha) => ({
+        id: linha.id,
+        nome: linha.nome,
+        categoria: linha.categoria,
+        preco: linha.preco,
+        descricao: linha.descricao,
+        imagem: linha.imagem,
+        imagemCostas: linha.imagem_costas ?? undefined,
+        focoHero: linha.foco_hero ?? undefined,
+        tamanhos: linha.tamanhos ?? undefined,
+    }));
 }
 /** Formata um número em Real: 89.9 → "R$ 89,90". */
 function formatarPreco(valor) {

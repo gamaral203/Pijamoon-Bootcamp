@@ -115,7 +115,7 @@
             window.location.href = `${RAIZ}carrinho/index.html`;
             return;
         }
-        const catalogo = await carregarProdutos(`${RAIZ}data/products.json`);
+        const catalogo = await carregarProdutos();
         renderizarResumo(catalogo);
     }
     iniciarCheckout();
