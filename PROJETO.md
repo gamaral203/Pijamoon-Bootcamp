@@ -21,7 +21,7 @@ Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lig
 
 ### Bônus
 - [ ] Vídeo auto-hospedado (+10) — decisão pendente.
-- [ ] Diagrama de arquitetura com BFF para app mobile (+10) — conceito já explicado a Gabriel, diagrama ainda não feito.
+- [x] Diagrama de arquitetura com BFF para app mobile (+10, 28/08) — feito por Gabriel, salvo em `docs/diagrama-bff.png` e exibido em `/como-fiz` com uma nota deixando claro que é a arquitetura *proposta* (app mobile futuro), não a atual — hoje o app web fala direto com o Supabase, sem BFF.
 - [x] Carrinho + checkout fictício (26/08) — carrinho persistido no navegador, login simulado obrigatório pra finalizar a compra. Ver seção própria em Decisões abaixo.
 - [x] Dark mode (27/08) — alternável por um botão no cabeçalho, salvo no navegador, em todas as páginas.
 
@@ -171,4 +171,4 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
 
 **Ainda falta (obrigatório):** gravar o vídeo (incluindo rodar o Lighthouse **ao vivo** de novo na hora da gravação, contra a URL da AWS agora — o que já foi feito antes foi só preparação/correção local) e montar `/como-fiz` com o vídeo embutido. Teste em celular real já foi feito via servidor local na rede Wi-Fi (26/08) — layout mobile validado e aprovado por Gabriel.
 
-**Bônus considerados:** diagrama de arquitetura com BFF (+10, conceito já explicado a Gabriel — ver seção do desafio), vídeo auto-hospedado (+10, decisão pendente).
+**Bônus considerados:** diagrama de arquitetura com BFF (+10, feito 28/08 — ver Extras acima), vídeo auto-hospedado (+10, decisão pendente).

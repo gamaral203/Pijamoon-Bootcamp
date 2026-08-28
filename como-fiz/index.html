@@ -78,6 +78,31 @@
         ></iframe>
       </div>
     </section>
+
+    <!--
+      Bônus do desafio: "desenho da arquitetura apontando onde entraria um
+      BFF se a loja ganhasse um app mobile". Hoje o front (app web) fala
+      direto com o Supabase — sem BFF nenhum. Este diagrama mostra a
+      arquitetura PROPOSTA (não a atual): se existisse também um app
+      mobile, um BFF entraria no meio dos dois clientes pra centralizar
+      regra de negócio (carrinho, checkout, validações) e adaptar a
+      resposta pro formato ideal de cada cliente, em vez de duplicar essa
+      lógica no app web e no app mobile.
+    -->
+    <section class="diagrama-bff" aria-label="Diagrama de arquitetura com BFF">
+      <h2>Onde entraria um BFF (bônus)</h2>
+      <p>
+        Hoje o app web fala direto com o Supabase. Se a Pijamoon ganhasse
+        um app mobile, um <strong>BFF (Backend for Frontend)</strong> entraria
+        no meio dos dois clientes — centralizando regras de negócio (carrinho,
+        checkout, validações) e adaptando a resposta pro formato ideal de cada
+        um, em vez de duplicar essa lógica no app web e no mobile.
+      </p>
+      <figure>
+        <img src="../docs/diagrama-bff.png" alt="Diagrama: app web e app mobile (futuro) apontando para um BFF, que aplica regras de negócio e adaptação por cliente antes de consultar o Supabase.">
+        <figcaption>App web e app mobile (futuro) → BFF (regras de negócio + adaptação por cliente) → Supabase.</figcaption>
+      </figure>
+    </section>
   </main>
 
   <footer>

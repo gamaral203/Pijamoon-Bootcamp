@@ -1356,6 +1356,48 @@ body {
   border: 0;
 }
 
+/* Diagrama BFF (bônus, página /como-fiz) */
+
+.diagrama-bff {
+  margin-top: 2.5rem;
+}
+
+.diagrama-bff h2 {
+  font-family: var(--fonte-logo);
+  font-size: 1.3rem;
+  color: var(--cor-texto-forte);
+  margin: 0 0 0.6rem;
+}
+
+.diagrama-bff > p {
+  max-width: 720px;
+  opacity: 0.85;
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+.diagrama-bff figure {
+  margin: 0;
+  padding: 1rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.diagrama-bff img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: calc(var(--raio) - 8px);
+}
+
+.diagrama-bff figcaption {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
 /* Rodapé */
 
 footer {
