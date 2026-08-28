@@ -10,7 +10,7 @@ Notas de alinhamento entre Gabriel e Claude. Se a conversa for perdida (troca de
 
 ### Requisitos obrigatórios
 - [x] Tema/identidade próprios — definidos (lua/nuvens/aconchego, ver abaixo).
-- [x] Catálogo em `products.json` (mín. 6 produtos), carregado via `fetch`. **Proibido hardcodar produto no HTML.** — 6 produtos, sem hardcode.
+- [x] Catálogo dinâmico (mín. 6 produtos), sem hardcode no HTML. **Proibido hardcodar produto no HTML.** — 6 produtos; migrado de `products.json`/`fetch` pra tabela `produtos` no Supabase (28/08, ver Extras abaixo).
 - [x] Busca OU filtro por categoria funcionando — os dois implementados (busca por nome + dropdown de categoria).
 - [x] Site estático — HTML/CSS/TS puro, sem framework nem bundler.
 - [x] Hospedado de graça — **no ar de verdade na AWS** (S3 + CloudFront), não em GitHub Pages/Netlify/etc como o PDF sugeria de exemplo (a lista é só sugestão, "hospedado de graça" é o requisito real). URL: https://drifd8sm57jac.cloudfront.net
@@ -26,7 +26,7 @@ Clareza da explicação (30) · Domínio técnico (25) · Loja no ar (20) · Lig
 - [x] Dark mode (27/08) — alternável por um botão no cabeçalho, salvo no navegador, em todas as páginas.
 
 ### Extras (fora do escopo pontuado do PDF — iniciativa do Gabriel)
-- [ ] Migrar catálogo pra Supabase (27/08) — Gabriel decidiu retomar a ideia de banco de dados real (ver decisão "Confirmação do professor" abaixo, que já liberou isso). Troca o `fetch("data/products.json")` por consulta numa tabela do Supabase. Login/carrinho simulados (`localStorage`) também poderiam migrar pra lá depois — ver a explicação dada a Gabriel sobre isso (síncrono→assíncrono, cross-device, auth real).
+- [x] Migrar catálogo pra Supabase (28/08) — feito. `supabase/schema.sql` cria a tabela `produtos` (RLS habilitado, policy pública só de leitura pra `anon`) e insere os 6 produtos; `carregarProdutos()` em `ts/shared.ts` trocou de `fetch("data/products.json")` pra `clienteSupabase.from("produtos").select("*")`, traduzindo snake_case→camelCase. Chaves (`SUPABASE_URL` + a `publishable key`, que é o equivalente novo da `anon key` — segura de expor no navegador por design, a segurança vem das RLS policies) hardcoded em `shared.ts`/`shared.js`, deploy e commit/push já feitos. Login/carrinho simulados (`localStorage`) continuam como estão — não migraram, fica pra depois se Gabriel quiser.
 
 ## Decisões já tomadas
 
@@ -71,7 +71,8 @@ PijamoonBootCamp/
 ├── ts/carrinho.ts        ← lógica do carrinho (itens, quantidade, ir pro checkout)
 ├── ts/checkout.ts        ← lógica do checkout (endereço, pagamento, confirmar)
 ├── js/                   ← gerado pelo tsc a partir de ts/, não editar à mão
-├── data/products.json    ← catálogo (6 produtos)
+├── data/products.json    ← catálogo antigo, não usado mais em runtime (ver supabase/)
+├── supabase/schema.sql   ← SQL da tabela `produtos` (RLS + policy de leitura + insert dos 6)
 ├── img/produtos/         ← fotos de frente e costas de cada produto
 ├── como-fiz/index.html   ← vídeo ainda não embutido (iframe vazio)
 ├── tsconfig.json
@@ -159,6 +160,15 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
 **Dois bugs pequenos corrigidos, achados por Gabriel testando (27/08):**
   - **Tamanho não dava pra desmarcar:** selecionar um tamanho na página de produto e clicar nele de novo não fazia nada — ficava sempre um tamanho obrigatoriamente marcado. Corrigido: clicar no tamanho já selecionado agora desmarca ele. Como consequência, "Adicionar ao carrinho"/"Comprar agora" passaram a **exigir** um tamanho escolhido (produto com tamanhos + nenhum selecionado = a caixa "treme" e nada é adicionado) — antes disso era possível adicionar sem tamanho nenhum, caindo silenciosamente num "único" que não correspondia a nada real.
   - **Zoom automático nos campos de login/checkout:** os campos de nome, e-mail, senha, endereço e cartão estavam com `font-size: 15.2px` — abaixo do mínimo de 16px que evita o zoom automático do Safari/iOS ao focar um campo em celular. Mesmo tipo de bug já corrigido antes no campo de busca do cabeçalho, só que esses ainda não tinham sido pegos. Corrigido pra 16px fixo.
+
+**Catálogo migrado pra Supabase e deploy atualizado (28/08):** ver item marcado em "Extras" acima pro detalhe técnico. Resumo do que rolou:
+  - Projeto Supabase criado (`Bootcamp UOL`), tabela `produtos` criada via SQL Editor a partir de `supabase/schema.sql`.
+  - `ts/shared.ts` (e `js/shared.js` gerado) trocaram a busca do catálogo pra usar o cliente Supabase (via CDN, `<script>` novo adicionado antes de `shared.js` em todas as 6 páginas HTML).
+  - Testado direto pela API REST (`/rest/v1/produtos`) antes de mexer no front, confirmando que a policy de leitura pública funciona com a chave usada no site.
+  - Deploy re-sincronizado: `aws s3 sync` (só os arquivos que mudaram) + `aws cloudfront create-invalidation --paths "/*"` na distribution `ER9G66Y0YYVCL`.
+  - Commit `403be7a` (`feat: migra catalogo de products.json pra tabela produtos no Supabase`) e push pro `origin/main`.
+  - AWS CLI instalado nessa máquina nesse processo (não estava antes) e configurado com uma nova chave de acesso do usuário IAM `Gabriel_Amaral` (a chave 1 dele, mais antiga, tinha o secret só salvo em outro PC).
+  - `data/products.json` ficou no repositório mas não é mais lido em runtime por nenhum código — candidato a remover mais pra frente, ou manter só como histórico/backup do catálogo.
 
 **Ainda falta (obrigatório):** gravar o vídeo (incluindo rodar o Lighthouse **ao vivo** de novo na hora da gravação, contra a URL da AWS agora — o que já foi feito antes foi só preparação/correção local) e montar `/como-fiz` com o vídeo embutido. Teste em celular real já foi feito via servidor local na rede Wi-Fi (26/08) — layout mobile validado e aprovado por Gabriel.
 

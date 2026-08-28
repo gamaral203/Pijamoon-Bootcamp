@@ -6,7 +6,7 @@ Loja de pijamas — desafio **"Minha Loja no Ar"** do **AI/R Fellowship**, turma
 
 ## Sobre
 
-Vitrine de pijamas com catálogo carregado dinamicamente via `fetch` (nenhum produto fica hardcodado no HTML), busca e filtro por categoria, hero em carrossel, página de detalhes com tamanhos, carrinho de compras, login e checkout simulados, e modo escuro alternável.
+Vitrine de pijamas com catálogo carregado dinamicamente de um banco de dados (Supabase — nenhum produto fica hardcodado no HTML), busca e filtro por categoria, hero em carrossel, página de detalhes com tamanhos, carrinho de compras, login e checkout simulados, e modo escuro alternável.
 
 Site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
 
@@ -26,7 +26,7 @@ Site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
 
 - HTML, CSS e TypeScript (compilado com `tsc`, sem bundler nem módulos)
 - Hospedado na AWS: **S3** (origem privada) + **CloudFront** (CDN), com Origin Access Control
-- Catálogo em `data/products.json` (migração pro Supabase planejada — ver `PROJETO.md`)
+- Catálogo no **Supabase** (Postgres + API REST via `supabase-js`, RLS com policy pública só de leitura — ver `supabase/schema.sql`)
 
 ## Rodando localmente
 
@@ -56,7 +56,7 @@ como-fiz/index.html   vídeo explicativo do desafio
 css/style.css          estilos (tema claro + escuro)
 ts/                     código-fonte TypeScript (comentado)
 js/                     gerado pelo tsc — não editar à mão
-data/products.json      catálogo de produtos
+supabase/schema.sql     SQL da tabela `produtos` (RLS + dados)
 img/produtos/           fotos dos produtos
 ```
 
