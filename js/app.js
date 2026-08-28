@@ -65,7 +65,7 @@
      * Gera os slides do hero a partir do próprio catálogo — usa a mesma foto
      * "imagem" de cada produto, sem duplicar caminho nenhum. Cada foto ganha
      * seu ponto de corte vertical (object-position) via o campo focoHero do
-     * products.json, porque as fotos são em retrato e o hero é bem mais largo
+     * catálogo, porque as fotos são em retrato e o hero é bem mais largo
      * que alto — sem isso, a foto ficaria cortada mostrando só o rosto ou só
      * os pés, dependendo da pose.
      */
@@ -116,7 +116,7 @@
     /**
      * Monta os botões de categoria dinamicamente a partir do que existe no
      * catálogo (Set remove duplicatas) — se um produto novo com categoria nova
-     * for adicionado no products.json, o botão dela aparece sozinho, sem
+     * for adicionado no banco, o botão dela aparece sozinho, sem
      * precisar editar HTML nenhum. É o mesmo princípio de "catálogo separado
      * do front" aplicado aqui: o menu de categorias reflete os dados, não o
      * contrário.
@@ -257,10 +257,9 @@
      * ============================================================ */
     /**
      * Ponto de entrada: sincroniza o cabeçalho (login/carrinho/tema), busca o
-     * catálogo via fetch e, se der certo, monta o hero + categorias + grade.
-     * Se o fetch falhar (ex: rodando o arquivo direto sem servidor, ou
-     * products.json fora do ar), mostra uma mensagem de erro em vez de
-     * quebrar a página.
+     * catálogo no Supabase e, se der certo, monta o hero + categorias + grade.
+     * Se a busca falhar (ex: Supabase fora do ar), mostra uma mensagem de erro
+     * em vez de quebrar a página.
      */
     async function iniciar() {
         atualizarHeaderConta();

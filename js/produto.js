@@ -3,8 +3,8 @@
  * produto.ts — lógica da página de detalhes de um produto (produto/index.html).
  *
  * A página não sabe de qual produto se trata até rodar: ela lê o "?id=..."
- * da própria URL, procura esse id dentro do catálogo (o mesmo
- * data/products.json que a vitrine usa) e desenha os detalhes na tela. É
+ * da própria URL, procura esse id dentro do catálogo (a mesma tabela
+ * "produtos" do Supabase que a vitrine usa) e desenha os detalhes na tela. É
  * por isso que o link do card na vitrine (ver ts/app.ts) é sempre
  * "produto/index.html?id=algum-id" — a página de produto é genérica, o "id"
  * na URL que decide o que ela mostra.

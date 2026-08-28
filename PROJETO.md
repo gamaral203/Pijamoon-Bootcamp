@@ -71,7 +71,6 @@ PijamoonBootCamp/
 ├── ts/carrinho.ts        ← lógica do carrinho (itens, quantidade, ir pro checkout)
 ├── ts/checkout.ts        ← lógica do checkout (endereço, pagamento, confirmar)
 ├── js/                   ← gerado pelo tsc a partir de ts/, não editar à mão
-├── data/products.json    ← catálogo antigo, não usado mais em runtime (ver supabase/)
 ├── supabase/schema.sql   ← SQL da tabela `produtos` (RLS + policy de leitura + insert dos 6)
 ├── img/produtos/         ← fotos de frente e costas de cada produto
 ├── como-fiz/index.html   ← vídeo ainda não embutido (iframe vazio)
@@ -168,7 +167,7 @@ Nome/tema/produtos já escolhidos: **Pijamoon** — pijamas, identidade lua/nuve
   - Deploy re-sincronizado: `aws s3 sync` (só os arquivos que mudaram) + `aws cloudfront create-invalidation --paths "/*"` na distribution `ER9G66Y0YYVCL`.
   - Commit `403be7a` (`feat: migra catalogo de products.json pra tabela produtos no Supabase`) e push pro `origin/main`.
   - AWS CLI instalado nessa máquina nesse processo (não estava antes) e configurado com uma nova chave de acesso do usuário IAM `Gabriel_Amaral` (a chave 1 dele, mais antiga, tinha o secret só salvo em outro PC).
-  - `data/products.json` ficou no repositório mas não é mais lido em runtime por nenhum código — candidato a remover mais pra frente, ou manter só como histórico/backup do catálogo.
+  - `data/products.json` removido do repositório (28/08) — não era mais lido em runtime por nenhum código, o catálogo real agora é a tabela `produtos` no Supabase.
 
 **Ainda falta (obrigatório):** gravar o vídeo (incluindo rodar o Lighthouse **ao vivo** de novo na hora da gravação, contra a URL da AWS agora — o que já foi feito antes foi só preparação/correção local) e montar `/como-fiz` com o vídeo embutido. Teste em celular real já foi feito via servidor local na rede Wi-Fi (26/08) — layout mobile validado e aprovado por Gabriel.
 

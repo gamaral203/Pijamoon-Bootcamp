@@ -58,7 +58,7 @@
           </button>
           <div class="categorias-menu" id="categoriasMenu" role="menu" aria-label="Categorias">
             <button type="button" class="categoria-link ativo" data-categoria="todas" role="menuitem">Todas</button>
-            <!-- demais categorias inseridas via JS, a partir das categorias presentes em data/products.json -->
+            <!-- demais categorias inseridas via JS, a partir das categorias presentes na tabela "produtos" do Supabase -->
           </div>
         </div>
       </div>
@@ -187,10 +187,10 @@
 
     <!--
       Grade de produtos: só o esqueleto está aqui. Os cards de verdade são
-      criados via JS (ts/app.ts, criarCardProduto) depois do fetch em
-      data/products.json — é o requisito do desafio de não hardcodar produto
-      nenhum no HTML. O texto "Carregando produtos…" abaixo só aparece no
-      instante entre o HTML carregar e o fetch terminar.
+      criados via JS (ts/app.ts, criarCardProduto) depois da busca na tabela
+      "produtos" do Supabase — é o requisito do desafio de não hardcodar
+      produto nenhum no HTML. O texto "Carregando produtos…" abaixo só
+      aparece no instante entre o HTML carregar e a busca terminar.
     -->
     <section class="loja" aria-label="Catálogo de produtos">
       <!-- mensagem "N produto(s) encontrado(s)" / "nenhum encontrado", atualizada a cada busca/filtro -->
