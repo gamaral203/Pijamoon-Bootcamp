@@ -1356,6 +1356,23 @@ body {
   border: 0;
 }
 
+.como-fiz-repo {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--cor-texto);
+}
+
+/* cor de texto forte (não o dourado) por contraste — dourado em cima do
+   fundo claro do modo dia fica abaixo do mínimo de acessibilidade; o
+   dourado entra só no sublinhado, como toque de cor */
+.como-fiz-repo a {
+  color: var(--cor-texto-forte);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--dourado);
+  text-underline-offset: 2px;
+}
+
 /* Diagrama BFF (bônus, página /como-fiz) */
 
 .diagrama-bff {
