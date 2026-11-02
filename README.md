@@ -6,9 +6,9 @@ Loja de pijamas — desafio **"Minha Loja no Ar"** do **AI/R Fellowship**, turma
 
 ## Sobre
 
-Vitrine de pijamas com catálogo carregado dinamicamente de um banco de dados (Supabase — nenhum produto fica hardcodado no HTML), busca e filtro por categoria, hero em carrossel, página de detalhes com tamanhos, carrinho de compras, login e checkout simulados, e modo escuro alternável.
+Vitrine de pijamas com catálogo carregado dinamicamente de uma API serverless na AWS (nenhum produto fica hardcodado no HTML), busca e filtro por categoria, hero em carrossel, página de detalhes com tamanhos, carrinho de compras, login e checkout simulados, e modo escuro alternável.
 
-Site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
+O front é um site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
 
 ## Funcionalidades
 
@@ -20,13 +20,42 @@ Site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
 - 💳 Checkout com endereço de entrega e pagamento simulado (cartão ou Pix)
 - 🌗 Modo claro/escuro alternável, salvo por página
 
-> Login, carrinho e checkout são **simulados no navegador** (`localStorage`) — este é um site estático, sem servidor nem banco de dados por trás. Nenhum dado real é enviado ou processado.
+> Login, carrinho e checkout são **simulados no navegador** (`localStorage`) — só o catálogo tem backend. Nenhum dado de usuário ou pedido é enviado ou processado.
+
+## Arquitetura
+
+O site e a API são servidos pelo mesmo domínio, então o navegador não precisa de CORS:
+
+```mermaid
+flowchart LR
+    Navegador["Navegador"] -->|HTTPS| CloudFront["CloudFront<br/>CDN"]
+
+    subgraph AWS["AWS"]
+        CloudFront -->|"/*"| S3["S3 privado<br/>site estático"]
+        CloudFront -->|"/api/*"| APIGateway["API Gateway<br/>GET /api/products"]
+        APIGateway -->|evento| Lambda["Lambda<br/>pijamoon-listar-produtos"]
+        Lambda -->|"Query no GSI1"| DynamoDB[("DynamoDB<br/>PijamoonLoja")]
+        Lambda -.->|logs| CloudWatch["CloudWatch"]
+        IAM["IAM Role<br/>menor privilégio"] -.->|permissões| Lambda
+    end
+```
+
+| Serviço | Papel |
+| --- | --- |
+| **CloudFront** | Entrega o site e encaminha `/api/*` para a API, sem cache nessa rota |
+| **S3** | Guarda os arquivos do site em um bucket privado, com Origin Access Control |
+| **API Gateway** (HTTP API) | Expõe a rota pública `GET /api/products` |
+| **Lambda** (Node.js 24) | Consulta o catálogo e devolve os produtos em JSON |
+| **DynamoDB** | Guarda os produtos na tabela `PijamoonLoja`, em modo on-demand |
+
+O catálogo é lido com um `Query` no índice `GSI1` (`GSI1PK = CATALOG`), sem `Scan`. A Lambda usa uma IAM Role, sem credenciais no código, e tem permissão apenas para fazer `dynamodb:Query` nesse índice.
+
+> A infraestrutura do backend e o código da Lambda foram criados pelo console da AWS e ainda não estão neste repositório.
 
 ## Stack
 
 - HTML, CSS e TypeScript (compilado com `tsc`, sem bundler nem módulos)
-- Hospedado na AWS: **S3** (origem privada) + **CloudFront** (CDN), com Origin Access Control
-- Catálogo no **Supabase** (Postgres + API REST via `supabase-js`, RLS com policy pública só de leitura — ver `supabase/schema.sql`)
+- AWS: S3, CloudFront, API Gateway, Lambda, DynamoDB, IAM e CloudWatch
 
 ## Rodando localmente
 
@@ -35,7 +64,9 @@ npm install
 npm run build      # compila ts/ para js/
 ```
 
-Depois é só servir os arquivos estáticos da raiz do projeto (ex: extensão *Live Server* do VS Code, ou `npx serve`) e abrir `index.html` — o `fetch` do catálogo não funciona abrindo o arquivo direto (`file://`), precisa de um servidor.
+Depois é só servir os arquivos estáticos da raiz do projeto (ex: extensão *Live Server* do VS Code, ou `npx serve`) e abrir `index.html`.
+
+> O catálogo é buscado em `/api/products`, um caminho que só existe no CloudFront. Rodando localmente, as páginas abrem, mas os produtos não carregam.
 
 Pra recompilar automaticamente enquanto edita o TypeScript:
 
@@ -56,10 +87,10 @@ como-fiz/index.html   vídeo explicativo do desafio
 css/style.css          estilos (tema claro + escuro)
 ts/                     código-fonte TypeScript (comentado)
 js/                     gerado pelo tsc — não editar à mão
-supabase/schema.sql     SQL da tabela `produtos` (RLS + dados)
+supabase/schema.sql     SQL do catálogo antigo no Supabase (histórico, não é mais usado)
 img/produtos/           fotos dos produtos
 ```
 
 ## Mais detalhes
 
-Este projeto é a entrega de um desafio de bootcamp — ver [`PROJETO.md`](PROJETO.md) para o histórico completo de decisões técnicas, arquitetura do deploy na AWS e o que ainda falta.
+Este projeto é a entrega de um desafio de bootcamp — ver [`PROJETO.md`](PROJETO.md) para o histórico de decisões técnicas da entrega original, feita quando o catálogo ainda estava no Supabase.
