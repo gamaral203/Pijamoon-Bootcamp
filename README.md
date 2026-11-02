@@ -91,6 +91,10 @@ supabase/schema.sql     SQL do catálogo antigo no Supabase (histórico, não é
 img/produtos/           fotos dos produtos
 ```
 
+## Roadmap
+
+O que já foi feito no backend e os próximos passos estão em [`ROADMAP.md`](ROADMAP.md).
+
 ## Mais detalhes
 
 Este projeto é a entrega de um desafio de bootcamp — ver [`PROJETO.md`](PROJETO.md) para o histórico de decisões técnicas da entrega original, feita quando o catálogo ainda estava no Supabase.
