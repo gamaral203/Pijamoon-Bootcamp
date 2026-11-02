@@ -58,7 +58,7 @@
           </button>
           <div class="categorias-menu" id="categoriasMenu" role="menu" aria-label="Categorias">
             <button type="button" class="categoria-link ativo" data-categoria="todas" role="menuitem">Todas</button>
-            <!-- demais categorias inseridas via JS, a partir das categorias presentes na tabela "produtos" do Supabase -->
+            <!-- demais categorias inseridas via JS, a partir das categorias presentes no catálogo -->
           </div>
         </div>
       </div>
@@ -187,8 +187,8 @@
 
     <!--
       Grade de produtos: só o esqueleto está aqui. Os cards de verdade são
-      criados via JS (ts/app.ts, criarCardProduto) depois da busca na tabela
-      "produtos" do Supabase — é o requisito do desafio de não hardcodar
+      criados via JS (ts/app.ts, criarCardProduto) depois da busca no
+      catálogo da API — é o requisito do desafio de não hardcodar
       produto nenhum no HTML. O texto "Carregando produtos…" abaixo só
       aparece no instante entre o HTML carregar e a busca terminar.
     -->
@@ -206,11 +206,8 @@
     <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
   </footer>
 
-  <!-- cliente do Supabase via CDN (sem npm/bundler) — precisa vir antes do
-       shared.js, que já usa "supabase.createClient(...)" assim que carrega.
-       shared.js primeiro (define as funções que app.js usa), depois app.js —
+  <!-- shared.js primeiro (define as funções que app.js usa), depois app.js —
        a ordem importa porque não tem import/export, é tudo escopo global -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/shared.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>

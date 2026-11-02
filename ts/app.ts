@@ -298,8 +298,8 @@
 
   /**
    * Ponto de entrada: sincroniza o cabeçalho (login/carrinho/tema), busca o
-   * catálogo no Supabase e, se der certo, monta o hero + categorias + grade.
-   * Se a busca falhar (ex: Supabase fora do ar), mostra uma mensagem de erro
+   * catálogo na API e, se der certo, monta o hero + categorias + grade.
+   * Se a busca falhar (ex: API fora do ar), mostra uma mensagem de erro
    * em vez de quebrar a página.
    */
   async function iniciar(): Promise<void> {
