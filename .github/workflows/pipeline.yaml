@@ -1,0 +1,47 @@
+name: Deploy do site
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write   # permite pedir o token OIDC pra assumir a role na AWS
+  contents: read    # permite o checkout ler o repositório
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Lista do que ENTRA no site: arquivo novo no repositório não vai pro ar por engano
+      - name: Montar pasta do site
+        run: |
+          mkdir dist
+          cp index.html dist/
+          cp -r js css img docs carrinho checkout como-fiz login produto dist/
+
+      - name: Login na AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::493354281684:role/pijamoon-github-deploy
+          aws-region: us-east-1
+
+      - name: Enviar para o S3
+        run: aws s3 sync dist/ s3://pijamoon-loja-gabriel
+
+      - name: Invalidar cache do CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ER9G66Y0YYVCL --paths "/*"
