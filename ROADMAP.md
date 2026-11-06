@@ -13,6 +13,13 @@ Projeto de estudo: evoluir a Pijamoon de uma loja com catálogo no Supabase para
 - [x] Colocar a API atrás do CloudFront
 - [x] Trocar o Supabase no front e publicar
 
+## ✅ Deploy automático do site (concluído)
+
+- [x] Criar o workflow no GitHub Actions (instalar, compilar e montar só os arquivos do site)
+- [x] Cadastrar o GitHub como provedor OIDC na AWS
+- [x] Criar a role de deploy, com permissão só para o bucket e a invalidação do CloudFront
+- [x] Publicar no S3 e invalidar o cache a cada push na `main`
+
 ## Fase 2: login e carrinho
 
 - [ ] Criar o Cognito User Pool

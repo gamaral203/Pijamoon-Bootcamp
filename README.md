@@ -52,10 +52,28 @@ O catálogo é lido com um `Query` no índice `GSI1` (`GSI1PK = CATALOG`), sem `
 
 > A infraestrutura do backend e o código da Lambda foram criados pelo console da AWS e ainda não estão neste repositório.
 
+## Deploy
+
+Cada push na `main` publica o site automaticamente pelo GitHub Actions ([`pipeline.yaml`](.github/workflows/pipeline.yaml)):
+
+```mermaid
+flowchart LR
+    Push["push na main"] --> Build["npm ci<br/>npm run build"]
+    Build --> Dist["monta dist/<br/>só os arquivos do site"]
+    Dist --> Login["login na AWS<br/>via OIDC"]
+    Login --> Sync["aws s3 sync"]
+    Sync --> Invalida["invalida o cache<br/>do CloudFront"]
+```
+
+O GitHub não guarda nenhuma credencial da AWS. A cada execução, a Action recebe um token OIDC e troca por uma credencial temporária de uma IAM Role. A role só aceita o workflow deste repositório na `main` e só pode enviar arquivos ao bucket do site e invalidar o cache da distribuição.
+
+O deploy publica apenas o site (HTML, `js/`, `css/`, `img/` e as páginas). A Lambda não entra no deploy, porque o código dela ainda não está no repositório.
+
 ## Stack
 
 - HTML, CSS e TypeScript (compilado com `tsc`, sem bundler nem módulos)
 - AWS: S3, CloudFront, API Gateway, Lambda, DynamoDB, IAM e CloudWatch
+- GitHub Actions com OIDC para o deploy
 
 ## Rodando localmente
 
@@ -88,6 +106,7 @@ css/style.css          estilos (tema claro + escuro)
 ts/                     código-fonte TypeScript (comentado)
 js/                     gerado pelo tsc — não editar à mão
 supabase/schema.sql     SQL do catálogo antigo no Supabase (histórico, não é mais usado)
+.github/workflows/      deploy automático do site no S3
 img/produtos/           fotos dos produtos
 ```
 
