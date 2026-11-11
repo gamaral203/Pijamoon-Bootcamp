@@ -17,7 +17,7 @@
  *  12. @media — todos os ajustes de responsivo/mobile ficam juntos no final,
  *      não espalhados perto de cada seção
  *
- * Cores de marca (--dourado, --azul-lavanda...) são fixas nos dois temas.
+ * Cores de marca (--amarelo-lua-forte, --azul-ceu...) são fixas nos dois temas.
  * "Papéis" como fundo de página, fundo de card e cor de texto usam as
  * variáveis --cor-* (--cor-fundo, --cor-superficie, --cor-texto...), que
  * mudam de valor sozinhas no modo escuro — ver o bloco
@@ -25,55 +25,55 @@
  */
 
 :root {
-  --azul-lavanda: #9AAFCC;
-  --azul-lavanda-claro: #B8C7E0;
-  --dourado: #E8C878;
-  --dourado-claro: #F0D9A0;
-  --branco-nuvem: #F5F5F2;
-  --azul-petroleo: #3B5478;
-  --azul-petroleo-escuro: #2C405D;
+  --azul-ceu: #A8C4E8;
+  --azul-ceu-claro: #D6E4F5;
+  --amarelo-lua-forte: #F4C55B;
+  --amarelo-lua: #FFE29A;
+  --creme: #FFF8ED;
+  --azul-medio: #3B6EA8;
+  --azul-noite: #0D2B5B;
 
   --fonte-logo: "Playfair Display", Georgia, serif;
-  --fonte-corpo: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fonte-corpo: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --raio: 16px;
 
   /* Tokens que trocam no modo escuro (ver [data-tema="escuro"] logo abaixo).
-     Cores de marca (dourado, azul-lavanda...) continuam fixas — só o "papel"
-     de fundo/superfície/texto muda. Selos com fundo dourado-claro (badges,
-     categoria ativa, ícone de conta logado) usam azul-petroleo-escuro
+     Cores de marca (amarelo-lua, azul-ceu...) continuam fixas — só o "papel"
+     de fundo/superfície/texto muda. Selos com fundo amarelo-lua (badges,
+     categoria ativa, ícone de conta logado) usam azul-noite
      diretamente, sem token, de propósito: o fundo deles nunca escurece. */
-  --cor-fundo: var(--branco-nuvem);
+  --cor-fundo: var(--creme);
   --cor-superficie: white;
-  --cor-texto: var(--azul-petroleo);
-  --cor-texto-forte: var(--azul-petroleo-escuro);
-  --cor-borda: var(--azul-lavanda);
-  --cor-borda-sutil: rgba(59, 84, 120, 0.12);
-  --cor-hover-sutil: rgba(59, 84, 120, 0.1);
-  --cor-placeholder-imagem: var(--azul-lavanda-claro);
-  --cor-header-fundo: rgba(184, 199, 224, 0.95);
-  --cor-botao-primario: var(--azul-petroleo-escuro);
+  --cor-texto: var(--azul-medio);
+  --cor-texto-forte: var(--azul-noite);
+  --cor-borda: var(--azul-ceu);
+  --cor-borda-sutil: rgba(13, 43, 91, 0.12);
+  --cor-hover-sutil: rgba(13, 43, 91, 0.1);
+  --cor-placeholder-imagem: var(--azul-ceu-claro);
+  --cor-header-fundo: rgba(214, 228, 245, 0.95);
+  --cor-botao-primario: var(--azul-noite);
   --cor-botao-primario-texto: white;
-  --gradiente-hero: linear-gradient(180deg, var(--azul-lavanda-claro), var(--branco-nuvem));
-  --sombra: 0 4px 14px rgba(59, 84, 120, 0.12);
-  --sombra-hover: 0 10px 24px rgba(59, 84, 120, 0.2);
+  --gradiente-hero: linear-gradient(180deg, var(--azul-ceu-claro), var(--creme));
+  --sombra: 0 4px 14px rgba(13, 43, 91, 0.12);
+  --sombra-hover: 0 10px 24px rgba(13, 43, 91, 0.2);
 }
 
 :root[data-tema="escuro"] {
-  --cor-fundo: #141B29;
-  --cor-superficie: #212B41;
-  --cor-texto: #B9C4DA;
-  --cor-texto-forte: #F2F1EC;
-  --cor-borda: #3C4A66;
+  --cor-fundo: #0A1B3A;
+  --cor-superficie: #13284D;
+  --cor-texto: #C6D6EE;
+  --cor-texto-forte: var(--creme);
+  --cor-borda: #2B4677;
   --cor-borda-sutil: rgba(255, 255, 255, 0.08);
   --cor-hover-sutil: rgba(255, 255, 255, 0.08);
-  --cor-placeholder-imagem: #2A3652;
-  --cor-header-fundo: rgba(20, 27, 41, 0.9);
-  /* no escuro, a ação principal vira dourada em vez de azul-petróleo —
+  --cor-placeholder-imagem: #1D355F;
+  --cor-header-fundo: rgba(10, 27, 58, 0.9);
+  /* no escuro, a ação principal vira amarela (cor da lua) em vez de azul-noite —
      combina com o tema de lua/estrelas e mantém contraste forte */
-  --cor-botao-primario: var(--dourado);
-  --cor-botao-primario-texto: var(--azul-petroleo-escuro);
-  --gradiente-hero: linear-gradient(180deg, #2A3652, #141B29);
+  --cor-botao-primario: var(--amarelo-lua);
+  --cor-botao-primario-texto: var(--azul-noite);
+  --gradiente-hero: linear-gradient(180deg, #13284D, #0A1B3A);
   --sombra: 0 4px 14px rgba(0, 0, 0, 0.35);
   --sombra-hover: 0 10px 24px rgba(0, 0, 0, 0.5);
 }
@@ -155,7 +155,7 @@ body {
   border: 1px solid var(--cor-borda);
   border-radius: 999px;
   background-color: var(--cor-superficie);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B5478' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B6EA8' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: 0.8rem center;
   background-size: 14px;
@@ -166,11 +166,11 @@ body {
    stroke — não segue variável CSS, então precisa de uma versão própria pro
    modo escuro (senão fica uma lupa quase invisível, azul-escuro sobre fundo escuro) */
 :root[data-tema="escuro"] .header-busca input {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B9C4DA' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C6D6EE' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
 }
 
 .header-busca input:focus {
-  outline: 2px solid var(--dourado);
+  outline: 2px solid var(--amarelo-lua-forte);
   outline-offset: 1px;
 }
 
@@ -192,7 +192,7 @@ body {
 
 .site-header-top nav a:hover,
 .site-header-top nav a:focus-visible {
-  border-bottom-color: var(--dourado);
+  border-bottom-color: var(--amarelo-lua-forte);
 }
 
 .categorias-dropdown {
@@ -259,11 +259,11 @@ body {
 }
 
 .categoria-link.ativo {
-  /* fundo dourado-claro não muda no escuro, então o texto fica fixo
+  /* fundo amarelo-lua não muda no escuro, então o texto fica fixo
      também — sem isso, o token adaptativo viraria quase branco sobre
      um fundo claro e perderia o contraste */
-  background: var(--dourado-claro);
-  color: var(--azul-petroleo-escuro);
+  background: var(--amarelo-lua);
+  color: var(--azul-noite);
 }
 
 .icone-header {
@@ -288,8 +288,8 @@ body {
 }
 
 .icone-header.logado {
-  color: var(--azul-petroleo-escuro);
-  background: var(--dourado-claro);
+  color: var(--azul-noite);
+  background: var(--amarelo-lua);
 }
 
 .conta-nome {
@@ -324,11 +324,11 @@ body {
   padding: 3rem 1.5rem 2.5rem;
   overflow: hidden;
   background:
-    radial-gradient(2px 2px at 15% 30%, var(--dourado) 0%, transparent 60%),
-    radial-gradient(2px 2px at 80% 20%, var(--dourado) 0%, transparent 60%),
-    radial-gradient(1.5px 1.5px at 60% 60%, var(--dourado-claro) 0%, transparent 60%),
-    radial-gradient(1.5px 1.5px at 30% 75%, var(--dourado-claro) 0%, transparent 60%),
-    radial-gradient(1.5px 1.5px at 90% 65%, var(--dourado) 0%, transparent 60%),
+    radial-gradient(2px 2px at 15% 30%, var(--amarelo-lua-forte) 0%, transparent 60%),
+    radial-gradient(2px 2px at 80% 20%, var(--amarelo-lua-forte) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 60% 60%, var(--amarelo-lua) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 30% 75%, var(--amarelo-lua) 0%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 90% 65%, var(--amarelo-lua-forte) 0%, transparent 60%),
     var(--gradiente-hero);
 }
 
@@ -386,7 +386,7 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(44, 64, 93, 0.05) 0%, rgba(44, 64, 93, 0.75) 100%);
+  background: linear-gradient(180deg, rgba(13, 43, 91, 0.05) 0%, rgba(13, 43, 91, 0.75) 100%);
   pointer-events: none;
 }
 
@@ -423,7 +423,7 @@ body {
   font-family: var(--fonte-corpo);
   font-weight: 600;
   font-size: 0.9rem;
-  color: var(--azul-petroleo-escuro);
+  color: var(--azul-noite);
   background: white;
   text-decoration: none;
   padding: 0.7rem 1.4rem;
@@ -444,7 +444,7 @@ body {
   height: 40px;
   border: none;
   border-radius: 50%;
-  background: rgba(44, 64, 93, 0.45);
+  background: rgba(13, 43, 91, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,7 +455,7 @@ body {
 
 .hero-seta:hover,
 .hero-seta:focus-visible {
-  background: rgba(44, 64, 93, 0.75);
+  background: rgba(13, 43, 91, 0.75);
 }
 
 .hero-seta-anterior {
@@ -485,7 +485,7 @@ body {
 }
 
 .hero-dots .dot.ativo {
-  background: var(--dourado);
+  background: var(--amarelo-lua-forte);
   transform: scale(1.2);
 }
 
@@ -518,8 +518,8 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--dourado-claro);
-  color: var(--azul-petroleo-escuro);
+  background: var(--amarelo-lua);
+  color: var(--azul-noite);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -612,7 +612,7 @@ body {
   height: 30px;
   border: none;
   border-radius: 50%;
-  background: rgba(44, 64, 93, 0.55);
+  background: rgba(13, 43, 91, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -631,7 +631,7 @@ body {
 
 .btn-alternar-foto:hover,
 .btn-alternar-foto:focus-visible {
-  background: rgba(44, 64, 93, 0.8);
+  background: rgba(13, 43, 91, 0.8);
 }
 
 .btn-alternar-foto[hidden] {
@@ -663,7 +663,7 @@ body {
 }
 
 .produto-fotos-dots .dot.ativo {
-  background: var(--dourado);
+  background: var(--amarelo-lua-forte);
 }
 
 .produto-info {
@@ -680,8 +680,8 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--azul-petroleo-escuro);
-  background: var(--dourado-claro);
+  color: var(--azul-noite);
+  background: var(--amarelo-lua);
   padding: 0.2rem 0.65rem;
   border-radius: 999px;
   margin-bottom: 0.6rem;
@@ -960,15 +960,15 @@ body {
 
 .login-ja-logado {
   font-size: 0.85rem;
-  background: var(--dourado-claro);
-  color: var(--azul-petroleo-escuro);
+  background: var(--amarelo-lua);
+  color: var(--azul-noite);
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
   margin: 0;
 }
 
 .login-ja-logado a {
-  color: var(--azul-petroleo-escuro);
+  color: var(--azul-noite);
   font-weight: 600;
 }
 
@@ -996,7 +996,7 @@ body {
 }
 
 .login-campo input:focus {
-  outline: 2px solid var(--dourado);
+  outline: 2px solid var(--amarelo-lua-forte);
   outline-offset: 1px;
 }
 
@@ -1158,15 +1158,15 @@ body {
 
 .carrinho-aviso-login {
   font-size: 0.85rem;
-  background: var(--dourado-claro);
-  color: var(--azul-petroleo-escuro);
+  background: var(--amarelo-lua);
+  color: var(--azul-noite);
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
   margin: 0 0 1rem;
 }
 
 .carrinho-aviso-login a {
-  color: var(--azul-petroleo-escuro);
+  color: var(--azul-noite);
   font-weight: 700;
 }
 
@@ -1342,7 +1342,7 @@ body {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: var(--azul-petroleo);
+  background: var(--azul-medio);
   border-radius: var(--raio);
   overflow: hidden;
   margin-top: 1rem;
@@ -1362,14 +1362,14 @@ body {
   color: var(--cor-texto);
 }
 
-/* cor de texto forte (não o dourado) por contraste — dourado em cima do
+/* cor de texto forte (não o amarelo) por contraste — amarelo em cima do
    fundo claro do modo dia fica abaixo do mínimo de acessibilidade; o
-   dourado entra só no sublinhado, como toque de cor */
+   amarelo entra só no sublinhado, como toque de cor */
 .como-fiz-repo a {
   color: var(--cor-texto-forte);
   font-weight: 600;
   text-decoration: underline;
-  text-decoration-color: var(--dourado);
+  text-decoration-color: var(--amarelo-lua-forte);
   text-underline-offset: 2px;
 }
 
@@ -1447,7 +1447,7 @@ footer {
     gap: 0.15rem;
   }
 
-  /* nome some no mobile pra não apertar o cabeçalho; o ícone dourado
+  /* nome some no mobile pra não apertar o cabeçalho; o ícone amarelo
      (.icone-header.logado) e o tooltip já indicam que está logado */
   .conta-nome {
     display: none;
