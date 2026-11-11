@@ -1,8 +1,8 @@
 {
-  "name": "pijamoon",
+  "name": "pijamoon-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Loja Pijamoon - Desafio Bootcamp Minha Loja no Ar",
+  "description": "Front headless da loja Pijamoon (site estático)",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch"
