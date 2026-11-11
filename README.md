@@ -60,10 +60,10 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 
 **Conceitos:** constructs L2 · `grant*` e menor privilégio · Query em GSI
 
-- [ ] Criar a tabela de produtos com um GSI para listar o catálogo sem Scan
-- [ ] Popular a tabela com os 6 produtos no deploy
-- [ ] Criar a Lambda do catálogo, com permissão só de leitura
-- [ ] Expor `GET /api/products` no API Gateway
+- [x] Criar a tabela de produtos com um GSI para listar o catálogo sem Scan
+- [x] Popular a tabela com os 6 produtos no deploy
+- [x] Criar a Lambda do catálogo, com permissão só de leitura
+- [x] Expor `GET /api/products` no API Gateway
 
 ### Etapa 3 · Site publicado
 
