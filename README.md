@@ -69,9 +69,9 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 
 **Conceitos:** S3 privado com Origin Access Control · CloudFront com várias origens · deploy do site pelo CDK
 
-- [ ] Criar o bucket privado e a distribuição do CloudFront
-- [ ] Encaminhar `/api/*` para o API Gateway, sem cache
-- [ ] Publicar o site pelo CDK e abrir a loja pela URL pública
+- [x] Criar o bucket privado e a distribuição do CloudFront
+- [x] Encaminhar `/api/*` para o API Gateway, sem cache
+- [x] Publicar o site pelo CDK e abrir a loja pela URL pública
 
 ### Etapa 4 · Checkout orientado a eventos
 
