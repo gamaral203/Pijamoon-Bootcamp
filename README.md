@@ -46,15 +46,15 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 - [x] Criar a branch do desafio
 - [x] Reorganizar o repositório, com o front em `site/`
 - [x] Tirar os arquivos das fases anteriores (Supabase e notas do bootcamp)
-- [ ] Instalar a AWS CLI e o AWS CDK e configurar o acesso à conta
+- [x] Instalar a AWS CLI e o AWS CDK e configurar o acesso à conta
 
 ### Etapa 1 · Fundação com CDK
 
 **Conceitos:** App, Stack e Construct · `synth`, `diff`, `deploy` e `destroy` · bootstrap
 
-- [ ] Criar o projeto CDK em TypeScript em `infra/`
-- [ ] Rodar o `cdk bootstrap` na conta e na região
-- [ ] Fazer o primeiro deploy e o primeiro `destroy` de uma stack simples
+- [x] Criar o projeto CDK em TypeScript em `infra/`
+- [x] Rodar o `cdk bootstrap` na conta e na região
+- [x] Fazer o primeiro deploy e o primeiro `destroy` de uma stack simples
 
 ### Etapa 2 · Catálogo
 
