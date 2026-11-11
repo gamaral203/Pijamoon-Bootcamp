@@ -1,1 +1,15 @@
+# dependências
 node_modules/
+
+# gerado pelo tsc a partir de site/ts/
+site/js/
+
+# gerado pelo CDK
+cdk.out/
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# pasta montada pelo workflow de deploy
+site/dist/

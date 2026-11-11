@@ -1,119 +1,147 @@
-# 🌙 Pijamoon
+# 🌙 Pijamoon · Commerce serverless na AWS
 
-Loja de pijamas — desafio **"Minha Loja no Ar"** do **AI/R Fellowship**, turma do Bootcamp **"AWS AI FDE for Commerce"**, promovida pela **AIR Academy** e o **Innovation Studio Digital Commerce**, com apoio da **AWS**.
+Loja de pijamas headless publicada na AWS com back-end serverless orientado a eventos e toda a infraestrutura definida como código com AWS CDK.
 
-**🔗 Loja no ar:** https://drifd8sm57jac.cloudfront.net
+> 🚧 **Em construção.** O andamento está no [Roadmap](#roadmap). A URL pública e as instruções de deploy entram aqui quando as etapas correspondentes forem concluídas.
 
-## Sobre
+## Visão geral
 
-Vitrine de pijamas com catálogo carregado dinamicamente de uma API serverless na AWS (nenhum produto fica hardcodado no HTML), busca e filtro por categoria, hero em carrossel, página de detalhes com tamanhos, carrinho de compras, login e checkout simulados, e modo escuro alternável.
+- **Front headless:** site estático em HTML, CSS e TypeScript, que só conversa com o back-end por API.
+- **Catálogo síncrono:** o navegador pede os produtos e recebe a resposta na hora.
+- **Checkout assíncrono:** o checkout publica um evento e responde na hora. O pedido é criado depois, por outro serviço, a partir de uma fila.
+- **Infraestrutura como código:** tudo é criado e removido com o CDK (`cdk deploy` e `cdk destroy`), sem passos manuais no console.
 
-O front é um site estático — HTML, CSS e TypeScript puro, sem framework e sem bundler.
-
-## Funcionalidades
-
-- 🔍 Busca por nome + filtro por categoria
-- 🖼️ Hero em carrossel, montado a partir das próprias fotos do catálogo
-- 👕 Página de detalhes do produto (fotos de frente/costas, tamanhos, quantidade)
-- 🛒 Carrinho de compras persistido no navegador
-- 🔐 Login simulado — obrigatório pra finalizar a compra
-- 💳 Checkout com endereço de entrega e pagamento simulado (cartão ou Pix)
-- 🌗 Modo claro/escuro alternável, salvo por página
-
-> Login, carrinho e checkout são **simulados no navegador** (`localStorage`) — só o catálogo tem backend. Nenhum dado de usuário ou pedido é enviado ou processado.
-
-## Arquitetura
-
-O site e a API são servidos pelo mesmo domínio, então o navegador não precisa de CORS:
+## Arquitetura planejada
 
 ```mermaid
 flowchart LR
-    Navegador["Navegador"] -->|HTTPS| CloudFront["CloudFront<br/>CDN"]
+    Navegador["Navegador"] -->|HTTPS| CloudFront["CloudFront"]
 
-    subgraph AWS["AWS"]
+    subgraph AWS["AWS · uma stack CDK"]
         CloudFront -->|"/*"| S3["S3 privado<br/>site estático"]
-        CloudFront -->|"/api/*"| APIGateway["API Gateway<br/>GET /api/products"]
-        APIGateway -->|evento| Lambda["Lambda<br/>pijamoon-listar-produtos"]
-        Lambda -->|"Query no GSI1"| DynamoDB[("DynamoDB<br/>PijamoonLoja")]
-        Lambda -.->|logs| CloudWatch["CloudWatch"]
-        IAM["IAM Role<br/>menor privilégio"] -.->|permissões| Lambda
+        CloudFront -->|"/api/*"| API["API Gateway<br/>HTTP API"]
+
+        API -->|"GET /api/products"| Catalogo["Lambda<br/>catálogo"]
+        Catalogo --> TabelaProdutos[("DynamoDB<br/>produtos")]
+
+        API -->|"POST /api/checkout"| Checkout["Lambda<br/>checkout"]
+        Checkout -->|"evento PedidoRealizado"| Bus["EventBridge<br/>event bus"]
+        Bus -->|regra| Fila["SQS<br/>fila de pedidos"]
+        Fila -.->|"falhas repetidas"| DLQ["SQS<br/>DLQ"]
+        Fila --> Pedidos["Lambda<br/>pedidos"]
+        Pedidos --> TabelaPedidos[("DynamoDB<br/>pedidos")]
+
+        API -->|"GET /api/orders"| Pedidos
     end
 ```
 
-| Serviço | Papel |
-| --- | --- |
-| **CloudFront** | Entrega o site e encaminha `/api/*` para a API, sem cache nessa rota |
-| **S3** | Guarda os arquivos do site em um bucket privado, com Origin Access Control |
-| **API Gateway** (HTTP API) | Expõe a rota pública `GET /api/products` |
-| **Lambda** (Node.js 24) | Consulta o catálogo e devolve os produtos em JSON |
-| **DynamoDB** | Guarda os produtos na tabela `PijamoonLoja`, em modo on-demand |
+Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
 
-O catálogo é lido com um `Query` no índice `GSI1` (`GSI1PK = CATALOG`), sem `Scan`. A Lambda usa uma IAM Role, sem credenciais no código, e tem permissão apenas para fazer `dynamodb:Query` nesse índice.
+## Roadmap
 
-> A infraestrutura do backend e o código da Lambda foram criados pelo console da AWS e ainda não estão neste repositório.
+Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi feito e o que ainda falta.
 
-## Deploy
+### Etapa 0 · Preparação
 
-Cada push na `main` publica o site automaticamente pelo GitHub Actions ([`pipeline.yaml`](.github/workflows/pipeline.yaml)):
+- [x] Criar a branch do desafio
+- [x] Reorganizar o repositório, com o front em `site/`
+- [x] Tirar os arquivos das fases anteriores (Supabase e notas do bootcamp)
+- [ ] Instalar a AWS CLI e o AWS CDK e configurar o acesso à conta
 
-```mermaid
-flowchart LR
-    Push["push na main"] --> Build["npm ci<br/>npm run build"]
-    Build --> Dist["monta dist/<br/>só os arquivos do site"]
-    Dist --> Login["login na AWS<br/>via OIDC"]
-    Login --> Sync["aws s3 sync"]
-    Sync --> Invalida["invalida o cache<br/>do CloudFront"]
-```
+### Etapa 1 · Fundação com CDK
 
-O GitHub não guarda nenhuma credencial da AWS. A cada execução, a Action recebe um token OIDC e troca por uma credencial temporária de uma IAM Role. A role só aceita o workflow deste repositório na `main` e só pode enviar arquivos ao bucket do site e invalidar o cache da distribuição.
+**Conceitos:** App, Stack e Construct · `synth`, `diff`, `deploy` e `destroy` · bootstrap
 
-O deploy publica apenas o site (HTML, `js/`, `css/`, `img/` e as páginas). A Lambda não entra no deploy, porque o código dela ainda não está no repositório.
+- [ ] Criar o projeto CDK em TypeScript em `infra/`
+- [ ] Rodar o `cdk bootstrap` na conta e na região
+- [ ] Fazer o primeiro deploy e o primeiro `destroy` de uma stack simples
 
-## Stack
+### Etapa 2 · Catálogo
 
-- HTML, CSS e TypeScript (compilado com `tsc`, sem bundler nem módulos)
-- AWS: S3, CloudFront, API Gateway, Lambda, DynamoDB, IAM e CloudWatch
-- GitHub Actions com OIDC para o deploy
+**Conceitos:** constructs L2 · `grant*` e menor privilégio · Query em GSI
 
-## Rodando localmente
+- [ ] Criar a tabela de produtos com um GSI para listar o catálogo sem Scan
+- [ ] Popular a tabela com os 6 produtos no deploy
+- [ ] Criar a Lambda do catálogo, com permissão só de leitura
+- [ ] Expor `GET /api/products` no API Gateway
 
-```bash
-npm install
-npm run build      # compila ts/ para js/
-```
+### Etapa 3 · Site publicado
 
-Depois é só servir os arquivos estáticos da raiz do projeto (ex: extensão *Live Server* do VS Code, ou `npx serve`) e abrir `index.html`.
+**Conceitos:** S3 privado com Origin Access Control · CloudFront com várias origens · deploy do site pelo CDK
 
-> O catálogo é buscado em `/api/products`, um caminho que só existe no CloudFront. Rodando localmente, as páginas abrem, mas os produtos não carregam.
+- [ ] Criar o bucket privado e a distribuição do CloudFront
+- [ ] Encaminhar `/api/*` para o API Gateway, sem cache
+- [ ] Publicar o site pelo CDK e abrir a loja pela URL pública
 
-Pra recompilar automaticamente enquanto edita o TypeScript:
+### Etapa 4 · Checkout orientado a eventos
 
-```bash
-npm run watch
-```
+**Conceitos:** síncrono x assíncrono · EventBridge (bus, regra e alvo) · SQS · DLQ · entrega "pelo menos uma vez" · idempotência
+
+- [ ] Criar o event bus e a regra do evento de pedido
+- [ ] Criar `POST /api/checkout`: validar o pedido, publicar o evento e responder na hora
+- [ ] Criar a fila de pedidos com DLQ
+- [ ] Criar a Lambda de pedidos, que lê a fila e grava na tabela de pedidos
+- [ ] Garantir que um evento repetido não gere um pedido duplicado
+- [ ] Expor `GET /api/orders` para consultar os pedidos
+
+### Etapa 5 · Front integrado
+
+- [ ] Fazer o checkout do site chamar a API e mostrar o número do pedido
+- [ ] Mostrar os pedidos do cliente no site
+- [ ] Testar o fluxo completo pela URL pública
+
+### Etapa 6 · CI/CD
+
+**Conceitos:** GitHub Actions · OIDC, sem credenciais salvas no GitHub
+
+- [ ] Criar a role de deploy acessada via OIDC
+- [ ] Rodar o build e o `cdk deploy` a cada push na `main`
+
+### Etapa 7 · Testes de falha e entrega
+
+- [ ] Forçar um erro na Lambda de pedidos e ver a mensagem chegar na DLQ
+- [ ] Atualizar o diagrama com a arquitetura final
+- [ ] Documentar como implantar e como remover a stack
+- [ ] Conferir se o repositório, a URL e o README estão acessíveis
+
+### Extras, se houver tempo
+
+- [ ] Carrinho no back-end, com serviço e tabela próprios
+- [ ] Login real com Amazon Cognito, protegendo as rotas de pedido
+- [ ] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
+- [ ] Ambientes separados de dev e prod
 
 ## Estrutura
 
 ```
-index.html            vitrine
-produto/index.html    detalhes do produto
-login/index.html      login simulado
-carrinho/index.html   carrinho
-checkout/index.html   endereço + pagamento simulado
-como-fiz/index.html   vídeo explicativo do desafio
-
-css/style.css          estilos (tema claro + escuro)
-ts/                     código-fonte TypeScript (comentado)
-js/                     gerado pelo tsc — não editar à mão
-supabase/schema.sql     SQL do catálogo antigo no Supabase (histórico, não é mais usado)
-.github/workflows/      deploy automático do site no S3
-img/produtos/           fotos dos produtos
+site/       front headless: HTML, CSS e TypeScript (compilado com tsc)
+.github/    workflow do GitHub Actions
+backend/    código das Lambdas (criado na Etapa 2)
+infra/      stack do AWS CDK em TypeScript (criada na Etapa 1)
 ```
 
-## Roadmap
+## Rodando o site localmente
 
-O que já foi feito no backend e os próximos passos estão em [`ROADMAP.md`](ROADMAP.md).
+```bash
+cd site
+npm ci
+npm run build      # compila site/ts/ para site/js/
+```
 
-## Mais detalhes
+Depois é só servir a pasta `site/` (por exemplo, com `npx serve site`). As páginas abrem, mas os produtos só carregam quando a API estiver publicada, porque o site busca o catálogo em `/api/products`.
 
-Este projeto é a entrega de um desafio de bootcamp — ver [`PROJETO.md`](PROJETO.md) para o histórico de decisões técnicas da entrega original, feita quando o catálogo ainda estava no Supabase.
+## Como implantar
+
+_Será preenchido na Etapa 7._
+
+## Histórico do projeto
+
+A Pijamoon nasceu no desafio "Minha Loja no Ar" do bootcamp e foi evoluindo neste mesmo repositório:
+
+1. **Site estático** com o catálogo em um arquivo JSON, publicado em S3 + CloudFront.
+2. **Catálogo no Supabase**, consultado direto pelo navegador.
+3. **Catálogo em uma API na AWS** (API Gateway, Lambda e DynamoDB), com os recursos criados pelo console.
+4. **Deploy automático do site** com GitHub Actions e OIDC.
+5. **Agora:** toda a infraestrutura em CDK, numa conta AWS nova, com o checkout orientado a eventos.
+
+Os arquivos das fases anteriores (como o SQL do Supabase e as notas da entrega do bootcamp) saíram da pasta do projeto, mas continuam no histórico do Git.
