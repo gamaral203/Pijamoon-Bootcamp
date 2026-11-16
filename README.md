@@ -110,6 +110,7 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 - [ ] Login real com Amazon Cognito, protegendo as rotas de pedido
 - [ ] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
 - [ ] Ambientes separados de dev e prod
+- [ ] Mensagem personalizada no pedido com Amazon Bedrock, como um segundo consumidor do evento de pedido
 
 ## Estrutura
 
