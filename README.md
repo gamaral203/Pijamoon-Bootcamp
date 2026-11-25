@@ -8,34 +8,46 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 - **Front headless:** site estático em HTML, CSS e TypeScript, que só conversa com o back-end por API.
 - **Catálogo síncrono:** o navegador pede os produtos e recebe a resposta na hora.
-- **Checkout assíncrono:** o checkout publica um evento e responde na hora. O pedido é criado depois, por outro serviço, a partir de uma fila.
+- **Checkout assíncrono:** o checkout publica um evento e responde na hora com `202 Accepted`. O pedido é criado depois, por outro serviço, a partir de uma fila.
 - **Infraestrutura como código:** tudo é criado e removido com o CDK (`cdk deploy` e `cdk destroy`), sem passos manuais no console.
 
-## Arquitetura planejada
+## Arquitetura
 
-```mermaid
-flowchart LR
-    Navegador["Navegador"] -->|HTTPS| CloudFront["CloudFront"]
+![Diagrama de arquitetura da Pijamoon na AWS](docs/arquitetura.png)
 
-    subgraph AWS["AWS · uma stack CDK"]
-        CloudFront -->|"/*"| S3["S3 privado<br/>site estático"]
-        CloudFront -->|"/api/*"| API["API Gateway<br/>HTTP API"]
+O desenho mostra a arquitetura completa planejada. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
-        API -->|"GET /api/products"| Catalogo["Lambda<br/>catálogo"]
-        Catalogo --> TabelaProdutos[("DynamoDB<br/>produtos")]
-
-        API -->|"POST /api/checkout"| Checkout["Lambda<br/>checkout"]
-        Checkout -->|"evento PedidoRealizado"| Bus["EventBridge<br/>event bus"]
-        Bus -->|regra| Fila["SQS<br/>fila de pedidos"]
-        Fila -.->|"falhas repetidas"| DLQ["SQS<br/>DLQ"]
-        Fila --> Pedidos["Lambda<br/>pedidos"]
-        Pedidos --> TabelaPedidos[("DynamoDB<br/>pedidos")]
-
-        API -->|"GET /api/orders"| Pedidos
-    end
-```
+- **Já no ar:** CloudFront, S3 privado com OAC, API Gateway, serviço de catálogo (Lambda + DynamoDB) e a stack CDK.
+- **Próximas etapas:** checkout com EventBridge e SQS, serviço de pedidos, Cognito, controles de custo e CI/CD.
+- **Extra:** mensagem personalizada com Amazon Bedrock.
 
 Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
+
+## Síncrono x assíncrono
+
+A regra para decidir é uma pergunta: **o cliente precisa da resposta agora para continuar?**
+
+| Ação | Tipo | Por quê |
+| --- | --- | --- |
+| Ver o catálogo | Síncrono | O cliente está olhando a tela, esperando os produtos |
+| Fazer login | Síncrono | Sem a resposta, ele não entra |
+| Finalizar a compra | Síncrono só na recepção | O checkout valida o pedido e responde na hora com `202 Accepted` e o número do pedido |
+| Criar o pedido | Assíncrono | Acontece logo depois, via evento e fila. Se falhar, a fila tenta de novo, e depois de várias falhas a mensagem vai para a DLQ, sem o cliente esperar |
+| Mensagem com IA (extra) | Assíncrono | Ninguém precisa esperar por ela. É um segundo consumidor do mesmo evento |
+| Consultar os pedidos | Síncrono | O cliente abriu a página e quer ver |
+
+O checkout é as duas coisas ao mesmo tempo: a resposta ao cliente é síncrona (`202 Accepted`: "recebi, vou processar") e a criação do pedido é assíncrona. Como a fila entrega cada mensagem **pelo menos uma vez**, o serviço de pedidos grava de forma idempotente: a mesma mensagem processada duas vezes não gera dois pedidos.
+
+## Custos
+
+A conta do projeto tem limite de **US$ 20 por mês**. A arquitetura foi pensada para isso:
+
+- **Só serviços cobrados por uso.** Nada fica ligado cobrando por hora: Lambda, API Gateway, DynamoDB on-demand, EventBridge, SQS, S3 e CloudFront custam centavos com tráfego de demonstração.
+- **Cache sem custo fixo.** O catálogo fica em cache no CloudFront e na memória da Lambda. Um cache dedicado (ElastiCache/Redis) cobraria por hora mesmo parado e exigiria uma VPC com NAT Gateway, o que sozinho passaria do orçamento.
+- **Proteção contra abuso.** Limite de requisições (throttling) na API, para um script não gerar custo chamando as rotas sem parar.
+- **Alerta antes de estourar.** Alertas do AWS Budgets por e-mail ao atingir parte do limite.
+
+A estimativa detalhada entra aqui na Etapa 4.
 
 ## Roadmap
 
@@ -73,41 +85,60 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 - [x] Encaminhar `/api/*` para o API Gateway, sem cache
 - [x] Publicar o site pelo CDK e abrir a loja pela URL pública
 
-### Etapa 4 · Checkout orientado a eventos
+### Etapa 4 · Custos, proteção e cache
+
+**Conceitos:** cobrança por uso · AWS Budgets · tags de custo · throttling · cache na borda
+
+- [ ] Criar alertas do AWS Budgets dentro do limite de US$ 20 por mês
+- [ ] Marcar todos os recursos da stack com tags de custo
+- [ ] Configurar o limite de requisições (throttling) na API
+- [ ] Guardar o catálogo em cache no CloudFront e na memória da Lambda
+- [ ] Estimar o custo mensal na AWS Pricing Calculator e documentar aqui
+
+### Etapa 5 · Checkout orientado a eventos
 
 **Conceitos:** síncrono x assíncrono · EventBridge (bus, regra e alvo) · SQS · DLQ · entrega "pelo menos uma vez" · idempotência
 
 - [ ] Criar o event bus e a regra do evento de pedido
-- [ ] Criar `POST /api/checkout`: validar o pedido, publicar o evento e responder na hora
+- [ ] Criar `POST /api/checkout`: validar o pedido, publicar o evento e responder `202 Accepted`
 - [ ] Criar a fila de pedidos com DLQ
-- [ ] Criar a Lambda de pedidos, que lê a fila e grava na tabela de pedidos
+- [ ] Criar a Lambda que lê a fila e grava na tabela de pedidos
 - [ ] Garantir que um evento repetido não gere um pedido duplicado
 - [ ] Expor `GET /api/orders` para consultar os pedidos
 
-### Etapa 5 · Front integrado
+### Etapa 6 · Front integrado
 
 - [ ] Fazer o checkout do site chamar a API e mostrar o número do pedido
 - [ ] Mostrar os pedidos do cliente no site
 - [ ] Testar o fluxo completo pela URL pública
 
-### Etapa 6 · CI/CD
+### Etapa 7 · Login com Amazon Cognito
+
+**Conceitos:** autenticação x autorização · User Pool · JWT · JWT authorizer no API Gateway
+
+- [ ] Criar o User Pool na stack
+- [ ] Trocar o login simulado do site pelo Cognito
+- [ ] Proteger o checkout e a consulta de pedidos com o JWT authorizer
+- [ ] Identificar o cliente pelo token, e não por um dado enviado pelo site
+
+### Etapa 8 · Conta do desafio e CI/CD
 
 **Conceitos:** GitHub Actions · OIDC, sem credenciais salvas no GitHub
 
+- [ ] Fazer o bootstrap e o primeiro deploy na conta AWS do desafio
 - [ ] Criar a role de deploy acessada via OIDC
 - [ ] Rodar o build e o `cdk deploy` a cada push na `main`
 
-### Etapa 7 · Testes de falha e entrega
+### Etapa 9 · Testes de falha e entrega
 
-- [ ] Forçar um erro na Lambda de pedidos e ver a mensagem chegar na DLQ
-- [ ] Atualizar o diagrama com a arquitetura final
+- [ ] Forçar um erro no processamento de pedidos e ver a mensagem chegar na DLQ
+- [ ] Conferir se o diagrama corresponde à arquitetura entregue
 - [ ] Documentar como implantar e como remover a stack
 - [ ] Conferir se o repositório, a URL e o README estão acessíveis
 
 ### Extras, se houver tempo
 
 - [ ] Carrinho no back-end, com serviço e tabela próprios
-- [ ] Login real com Amazon Cognito, protegendo as rotas de pedido
 - [ ] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
 - [ ] Ambientes separados de dev e prod
 - [ ] Mensagem personalizada no pedido com Amazon Bedrock, como um segundo consumidor do evento de pedido
@@ -116,9 +147,10 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 
 ```
 site/       front headless: HTML, CSS e TypeScript (compilado com tsc)
+backend/    código das Lambdas
+infra/      stack do AWS CDK em TypeScript
+docs/       diagrama de arquitetura (draw.io e PNG)
 .github/    workflow do GitHub Actions
-backend/    código das Lambdas (criado na Etapa 2)
-infra/      stack do AWS CDK em TypeScript (criada na Etapa 1)
 ```
 
 ## Rodando o site localmente
@@ -133,7 +165,7 @@ Depois é só servir a pasta `site/` (por exemplo, com `npx serve site`). As pá
 
 ## Como implantar
 
-_Será preenchido na Etapa 7._
+_Será preenchido na Etapa 9._
 
 ## Histórico do projeto
 
