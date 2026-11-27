@@ -2,11 +2,14 @@
  * checkout.ts — lógica da página de finalizar compra (checkout/index.html):
  * endereço de entrega, forma de pagamento (cartão ou Pix) e confirmação.
  *
- * Assim como o login, é tudo simulado: nenhum dado de endereço ou cartão é
- * enviado pra lugar nenhum, é só um formulário que precisa estar preenchido
- * (validação HTML5 com "required") pra poder "confirmar o pagamento" —
- * chega só até aí porque o desafio pede um checkout fictício, não uma
- * integração de pagamento de verdade.
+ * Ao confirmar, o pedido vai para a API da loja (POST /api/checkout), que
+ * responde 202 Accepted com o número do pedido. A criação do pedido é
+ * assíncrona (evento → fila → Lambda), então a página fica consultando
+ * GET /api/orders/{número} até o pedido aparecer como confirmado.
+ *
+ * O pagamento continua simulado: o site envia só o MÉTODO escolhido
+ * ("cartao" ou "pix"). Número, validade e CVV do cartão nunca saem do
+ * navegador, nem para a nossa própria API.
  */
 (function () {
   // RAIZ = como voltar da pasta checkout/ até a raiz do site
@@ -16,6 +19,16 @@
   const checkoutSucesso = document.getElementById("checkoutSucesso") as HTMLDivElement;
   const checkoutItens = document.getElementById("checkoutItens") as HTMLDivElement;
   const checkoutTotal = document.getElementById("checkoutTotal") as HTMLElement;
+  const checkoutErro = document.getElementById("checkoutErro") as HTMLDivElement;
+  const botaoConfirmar = document.getElementById("botaoConfirmarPagamento") as HTMLButtonElement;
+
+  const sucessoNumero = document.getElementById("sucessoNumero") as HTMLElement;
+  const sucessoTotal = document.getElementById("sucessoTotal") as HTMLElement;
+  const sucessoStatus = document.getElementById("sucessoStatus") as HTMLElement;
+
+  /** Lê o valor de um campo do formulário pelo id, sem espaços nas pontas. */
+  const valorDe = (id: string): string =>
+    (document.getElementById(id) as HTMLInputElement | HTMLSelectElement).value.trim();
 
   const metodoCartao = document.getElementById("metodoCartao") as HTMLInputElement;
   const metodoPix = document.getElementById("metodoPix") as HTMLInputElement;
@@ -95,12 +108,138 @@
     return total;
   }
 
-  /** "Paga": esvazia o carrinho de verdade e troca o formulário pela tela de sucesso. */
-  function confirmarPagamento(): void {
+  /** Resposta do POST /api/checkout quando o pedido é aceito (202). */
+  interface PedidoRecebido {
+    pedidoId: string;
+    status: string;
+    total: number;
+  }
+
+  /**
+   * Monta o corpo do pedido com o que a API espera: itens do carrinho,
+   * cliente logado, endereço e o método de pagamento. O preço NÃO vai: quem
+   * calcula o total é a API, com os preços do catálogo.
+   */
+  function montarPedido() {
+    const usuario = obterUsuario();
+    return {
+      cliente: { nome: usuario?.nome ?? "", email: usuario?.email ?? "" },
+      itens: obterCarrinho().map(({ produtoId, tamanho, quantidade }) => ({ produtoId, tamanho, quantidade })),
+      entrega: {
+        cep: valorDe("campoCep"),
+        rua: valorDe("campoRua"),
+        numero: valorDe("campoNumero"),
+        complemento: valorDe("campoComplemento"),
+        bairro: valorDe("campoBairro"),
+        cidade: valorDe("campoCidade"),
+        estado: valorDe("campoEstado"),
+      },
+      pagamento: metodoPix.checked ? "pix" : "cartao",
+    };
+  }
+
+  /**
+   * Mostra um erro acima do botão. Usa textContent (e não innerHTML) de
+   * propósito: a mensagem pode trazer texto vindo da API, e textContent
+   * nunca interpreta HTML, então não abre brecha para injetar código na página.
+   */
+  function mostrarErro(titulo: string, detalhes: string[] = []): void {
+    checkoutErro.replaceChildren();
+    const paragrafo = document.createElement("p");
+    paragrafo.textContent = titulo;
+    checkoutErro.append(paragrafo);
+    if (detalhes.length > 0) {
+      const lista = document.createElement("ul");
+      for (const detalhe of detalhes) {
+        const item = document.createElement("li");
+        item.textContent = detalhe;
+        lista.append(item);
+      }
+      checkoutErro.append(lista);
+    }
+    checkoutErro.hidden = false;
+  }
+
+  /** Liga/desliga o estado "enviando" do botão, para ninguém clicar duas vezes. */
+  function enviando(sim: boolean): void {
+    botaoConfirmar.disabled = sim;
+    botaoConfirmar.textContent = sim ? "Enviando pedido…" : "Confirmar pagamento";
+  }
+
+  const esperar = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms));
+
+  /**
+   * A parte assíncrona, vista pelo cliente: o pedido foi aceito (202), mas
+   * só existe depois que o serviço de pedidos processar o evento. A página
+   * consulta a cada 1,5 s (abaixo do limite de 2 requisições por segundo da
+   * API) por até ~30 s. Na prática, o pedido aparece em poucos segundos.
+   */
+  async function acompanharPedido(pedidoId: string): Promise<void> {
+    for (let tentativa = 1; tentativa <= 20; tentativa++) {
+      await esperar(1500);
+      try {
+        const resposta = await fetch(`/api/orders/${encodeURIComponent(pedidoId)}`);
+        if (resposta.ok) {
+          const pedido = await resposta.json();
+          if (pedido.status === "CONFIRMADO") {
+            sucessoStatus.textContent = "Pedido confirmado ✓";
+            sucessoStatus.className = "pedido-status pedido-status-confirmado";
+            return;
+          }
+        }
+        // 404 = ainda em processamento; 429 = limite da API: só espera e tenta de novo
+      } catch {
+        // falha de rede momentânea: tenta de novo na próxima volta
+      }
+    }
+    sucessoStatus.textContent =
+      "Seu pedido foi recebido e ainda está sendo processado. Guarde o número acima.";
+    sucessoStatus.className = "pedido-status pedido-status-processando";
+  }
+
+  /** Troca o formulário pela tela de pedido recebido e esvazia o carrinho. */
+  function mostrarPedidoRecebido(pedido: PedidoRecebido): void {
     salvarCarrinho([]);
+    sucessoNumero.textContent = pedido.pedidoId;
+    sucessoTotal.textContent = formatarPreco(pedido.total);
     checkoutConteudo.hidden = true;
     checkoutSucesso.hidden = false;
     atualizarHeaderConta(RAIZ); // zera o número no ícone do carrinho, já que ele acabou de esvaziar
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    acompanharPedido(pedido.pedidoId);
+  }
+
+  /**
+   * Envia o pedido para a API. O carrinho só é esvaziado quando a API aceita
+   * (202): se der erro, o cliente não perde o que escolheu.
+   */
+  async function confirmarPagamento(): Promise<void> {
+    checkoutErro.hidden = true;
+    enviando(true);
+    try {
+      const resposta = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(montarPedido()),
+      });
+      const corpo = await resposta.json().catch(() => ({}));
+
+      if (resposta.status === 202) {
+        mostrarPedidoRecebido(corpo as PedidoRecebido);
+        return;
+      }
+      if (resposta.status === 400) {
+        mostrarErro("Não deu para registrar o pedido. Confira:", corpo.detalhes ?? []);
+      } else if (resposta.status === 429) {
+        mostrarErro("Muitas tentativas em pouco tempo. Espere alguns segundos e tente de novo.");
+      } else {
+        mostrarErro("Não foi possível registrar o pedido agora. Tente de novo em instantes.");
+      }
+    } catch {
+      mostrarErro("Sem conexão com a loja. Confira sua internet e tente de novo.");
+    } finally {
+      enviando(false);
+    }
   }
 
   // o botão "Confirmar pagamento" é type="submit" dentro do <form>, então o

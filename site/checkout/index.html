@@ -74,9 +74,10 @@
 
     <!--
       Só chega até aqui quem está logado E tem item no carrinho (ts/checkout.ts
-      manda de volta pra login ou pro carrinho, respectivamente, senão). Tudo
-      abaixo é simulado: nenhum dado de endereço/cartão é enviado a lugar
-      nenhum — o "required" dos campos é só pra não deixar confirmar vazio.
+      manda de volta pra login ou pro carrinho, respectivamente, senão).
+      Ao confirmar, o site envia o pedido para POST /api/checkout: itens,
+      cliente, endereço e o MÉTODO de pagamento. Os dados do cartão nunca
+      saem do navegador (o pagamento é simulado).
     -->
     <form id="checkoutConteudo" class="checkout-layout">
       <div class="checkout-formularios">
@@ -221,16 +222,27 @@
           <span>Total</span>
           <strong id="checkoutTotal"></strong>
         </div>
-        <!-- type="submit": aciona o evento "submit" do <form> acima, que dispara confirmarPagamento() -->
+        <!-- erros da API (pedido inválido, limite de requisições, falha de rede) aparecem aqui -->
+        <div class="checkout-erro" id="checkoutErro" role="alert" hidden></div>
+        <!-- type="submit": aciona o evento "submit" do <form> acima, que envia o pedido para a API -->
         <button type="submit" class="btn-comprar" id="botaoConfirmarPagamento">Confirmar pagamento</button>
-        <p class="checkout-nota">Simulação pra este desafio — nenhum dado real é enviado ou processado.</p>
+        <p class="checkout-nota">Pagamento simulado: os dados do cartão não saem do seu navegador. O pedido é enviado para a API da loja.</p>
       </aside>
     </form>
 
-    <!-- troca de lugar com o form acima (via JS) quando o pagamento é "confirmado"; aqui é onde o carrinho é esvaziado de verdade -->
+    <!--
+      Troca de lugar com o form acima quando a API responde 202 Accepted.
+      O pedido ainda não existe nesse momento: ele é criado logo depois, pelo
+      serviço de pedidos (evento → fila → Lambda). Por isso o status começa em
+      "processando" e o site consulta GET /api/orders/{número} até o pedido
+      aparecer como confirmado.
+    -->
     <div class="carrinho-sucesso" id="checkoutSucesso" hidden>
-      <p>Pedido confirmado! 🎉</p>
-      <p class="carrinho-sucesso-nota">Isso é só uma simulação pra este desafio — nenhum pagamento real foi feito.</p>
+      <p>Pedido recebido! 🌙</p>
+      <p class="pedido-numero">Número do pedido: <code id="sucessoNumero"></code></p>
+      <p class="pedido-total">Total: <strong id="sucessoTotal"></strong></p>
+      <p class="pedido-status pedido-status-processando" id="sucessoStatus" aria-live="polite">Processando o pedido…</p>
+      <p class="carrinho-sucesso-nota">Pagamento simulado para este desafio: nenhuma cobrança real foi feita.</p>
       <a href="../index.html" class="hero-cta">Voltar pra loja</a>
     </div>
   </main>

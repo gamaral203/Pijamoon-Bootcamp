@@ -1195,6 +1195,67 @@ body {
   margin: 0 0 1.5rem;
 }
 
+/* Pedido recebido (checkout): número, total e o andamento do pedido */
+
+.pedido-numero,
+.pedido-total {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.pedido-numero code {
+  font-size: 0.8rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--cor-hover-sutil);
+  color: var(--cor-texto-forte);
+  word-break: break-all;
+}
+
+.pedido-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* processando: bolinha amarela pulsando, a "lua acendendo" */
+.pedido-status-processando {
+  background: rgba(255, 226, 154, 0.25);
+  color: var(--cor-texto-forte);
+}
+
+.pedido-status-processando::before {
+  content: "";
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--amarelo-lua-forte);
+  animation: pedido-pulso 1s ease-in-out infinite alternate;
+}
+
+.pedido-status-confirmado {
+  background: rgba(46, 160, 67, 0.15);
+  color: #1F7A36;
+}
+
+:root[data-tema="escuro"] .pedido-status-confirmado {
+  color: #7EE2A0;
+}
+
+@keyframes pedido-pulso {
+  from { opacity: 0.3; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pedido-status-processando::before { animation: none; }
+}
+
 /* Página de checkout (checkout/index.html) */
 
 .checkout-layout {
@@ -1334,6 +1395,32 @@ body {
   opacity: 0.6;
   text-align: center;
   margin: 0.75rem 0 0;
+}
+
+/* erro vindo da API, acima do botão de confirmar */
+.checkout-erro {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(214, 69, 69, 0.45);
+  background: rgba(214, 69, 69, 0.1);
+  color: var(--cor-texto-forte);
+  font-size: 0.85rem;
+}
+
+.checkout-erro p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.checkout-erro ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.btn-comprar:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 /* Vídeo (página /como-fiz) */
