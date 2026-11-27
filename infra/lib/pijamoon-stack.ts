@@ -15,6 +15,7 @@ import { ServicoCheckout } from './servico-checkout';
 import { ServicoPedidos } from './servico-pedidos';
 import { Autenticacao } from './autenticacao';
 import { Monitoramento } from './monitoramento';
+import { ServicoMensagens } from './servico-mensagens';
 
 /** Raiz do repositório, para achar backend/ e os dados a partir de infra/lib/. */
 const RAIZ = path.join(__dirname, '..', '..');
@@ -183,6 +184,9 @@ export class PijamoonStack extends cdk.Stack {
     new ServicoCheckout(this, 'Checkout', { api, barramento, tabelaProdutos, authorizer });
     const pedidos = new ServicoPedidos(this, 'Pedidos', { api, barramento, authorizer });
 
+    // Extra: mensagem personalizada com o Bedrock, segundo consumidor do evento.
+    const mensagens = new ServicoMensagens(this, 'Mensagens', { api, barramento, authorizer });
+
     // Alarmes: DLQ com mensagem, fila parada e erros 5xx na API, por e-mail.
     new Monitoramento(this, 'Monitoramento', {
       api,
@@ -203,6 +207,7 @@ export class PijamoonStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'NomeTabelaPedidos', { value: pedidos.tabela.tableName });
     new cdk.CfnOutput(this, 'UrlFilaPedidos', { value: pedidos.fila.queueUrl });
     new cdk.CfnOutput(this, 'UrlDlqPedidos', { value: pedidos.dlq.queueUrl });
+    new cdk.CfnOutput(this, 'NomeTabelaMensagens', { value: mensagens.tabela.tableName });
     new cdk.CfnOutput(this, 'IdUserPool', { value: autenticacao.userPool.userPoolId });
     new cdk.CfnOutput(this, 'IdClienteCognito', { value: autenticacao.clienteSite.userPoolClientId });
   }

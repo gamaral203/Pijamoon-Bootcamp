@@ -28,6 +28,7 @@
   const sucessoNumero = document.getElementById("sucessoNumero") as HTMLElement;
   const sucessoTotal = document.getElementById("sucessoTotal") as HTMLElement;
   const sucessoStatus = document.getElementById("sucessoStatus") as HTMLElement;
+  const sucessoMensagem = document.getElementById("sucessoMensagem") as HTMLQuoteElement;
 
   /** Lê o valor de um campo do formulário pelo id, sem espaços nas pontas. */
   const valorDe = (id: string): string =>
@@ -194,6 +195,7 @@
           if (pedido.status === "CONFIRMADO") {
             sucessoStatus.textContent = "Pedido confirmado ✓";
             sucessoStatus.className = "pedido-status pedido-status-confirmado";
+            mostrarMensagem(pedidoId);
             return;
           }
         }
@@ -205,6 +207,34 @@
     sucessoStatus.textContent =
       "Seu pedido foi recebido e ainda está sendo processado. Guarde o número acima.";
     sucessoStatus.className = "pedido-status pedido-status-processando";
+  }
+
+  /**
+   * Busca o recado do pedido, escrito pelo Amazon Bedrock. Ele é gerado por
+   * outro serviço, em paralelo ao pedido (segundo consumidor do mesmo evento),
+   * então pode demorar uns segundos: tenta algumas vezes e, se não vier, a
+   * tela simplesmente fica sem o recado. É um enfeite, não pode atrapalhar.
+   */
+  async function mostrarMensagem(pedidoId: string): Promise<void> {
+    for (let tentativa = 1; tentativa <= 8; tentativa++) {
+      await esperar(2000);
+      try {
+        const token = await obterTokenValido();
+        if (!token) return;
+        const resposta = await fetch(`/api/orders/${encodeURIComponent(pedidoId)}/mensagem`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (resposta.ok) {
+          const { mensagem } = await resposta.json();
+          // textContent: o texto da IA nunca vira HTML na página
+          sucessoMensagem.textContent = mensagem;
+          sucessoMensagem.hidden = false;
+          return;
+        }
+      } catch {
+        // falha momentânea: tenta de novo
+      }
+    }
   }
 
   /** Troca o formulário pela tela de pedido recebido e esvazia o carrinho. */

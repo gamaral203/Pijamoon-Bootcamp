@@ -242,6 +242,8 @@
       <p class="pedido-numero">Número do pedido: <code id="sucessoNumero"></code></p>
       <p class="pedido-total">Total: <strong id="sucessoTotal"></strong></p>
       <p class="pedido-status pedido-status-processando" id="sucessoStatus" aria-live="polite">Processando o pedido…</p>
+      <!-- recado escrito pelo Amazon Bedrock (serviço de mensagens), quando ficar pronto -->
+      <blockquote class="pedido-mensagem" id="sucessoMensagem" aria-live="polite" hidden></blockquote>
       <p class="carrinho-sucesso-nota">Pagamento simulado para este desafio: nenhuma cobrança real foi feita.</p>
       <div class="pedido-acoes">
         <a href="../pedidos/index.html" class="hero-cta">Ver meus pedidos</a>
