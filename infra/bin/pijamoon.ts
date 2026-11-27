@@ -40,6 +40,7 @@ const backend = new PijamoonStack(app, 'PijamoonStack', {
 new SiteStack(app, 'PijamoonSite', {
   env,
   api: backend.api,
+  idClienteCognito: backend.idClienteCognito,
   emailAlertas,
   description: 'Pijamoon: hospedagem do site no Amplify, com disjuntor de tráfego',
 });

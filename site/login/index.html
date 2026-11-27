@@ -70,45 +70,76 @@
 
   <main class="login-pagina">
     <!--
-      Formulário simulado: o submit (ver ts/login.ts) não valida a senha
-      contra nada — só confere se nome e e-mail foram preenchidos, salva os
-      dois no localStorage e manda pra "próxima página" (ver o parâmetro
-      "next" na URL, usado quando o carrinho/checkout mandam pra cá).
+      Login de verdade, com Amazon Cognito (ver ts/auth.ts). Três telas no
+      mesmo lugar, trocadas pelo ts/login.ts:
+        1. Entrar           → e-mail e senha
+        2. Criar conta      → nome, e-mail e senha; o Cognito manda um código
+        3. Confirmar e-mail → o código de 6 dígitos que chegou por e-mail
+      A senha vai do navegador direto para o Cognito, por HTTPS.
     -->
-    <form class="login-caixa" id="formLogin">
-      <h1>Entrar</h1>
-      <p class="login-aviso">
-        Login simulado pra fins do desafio — fica salvo só no seu navegador, sem servidor nem senha real por trás.
-      </p>
+    <div class="login-caixa">
+      <div class="login-abas" role="tablist" aria-label="Entrar ou criar conta">
+        <button type="button" class="login-aba ativa" id="abaEntrar" role="tab" aria-selected="true">Entrar</button>
+        <button type="button" class="login-aba" id="abaCadastro" role="tab" aria-selected="false">Criar conta</button>
+      </div>
 
       <!-- só aparece se já tiver alguém logado quando a página carrega -->
       <p class="login-ja-logado" id="avisoJaLogado" hidden></p>
 
-      <label class="login-campo">
-        Nome
-        <input type="text" id="campoNome" name="nome" required autocomplete="name">
-      </label>
+      <!-- mensagens de erro e de sucesso das três telas -->
+      <p class="login-mensagem" id="loginMensagem" role="alert" hidden></p>
 
-      <label class="login-campo">
-        E-mail
-        <input type="email" id="campoEmail" name="email" required autocomplete="email">
-      </label>
+      <form class="login-form" id="formEntrar">
+        <label class="login-campo">
+          E-mail
+          <input type="email" id="entrarEmail" required autocomplete="email">
+        </label>
+        <label class="login-campo">
+          Senha
+          <input type="password" id="entrarSenha" required autocomplete="current-password">
+        </label>
+        <button type="submit" class="login-botao">Entrar</button>
+      </form>
 
-      <!-- existe pra parecer um login de verdade, mas não é lida/validada em lugar nenhum do código -->
-      <label class="login-campo">
-        Senha
-        <input type="password" id="campoSenha" name="senha" required autocomplete="current-password">
-      </label>
+      <form class="login-form" id="formCadastro" hidden>
+        <label class="login-campo">
+          Nome
+          <input type="text" id="cadastroNome" required autocomplete="name" maxlength="80">
+        </label>
+        <label class="login-campo">
+          E-mail
+          <input type="email" id="cadastroEmail" required autocomplete="email">
+        </label>
+        <label class="login-campo">
+          Senha
+          <input type="password" id="cadastroSenha" required autocomplete="new-password" minlength="8">
+          <span class="login-dica">Pelo menos 8 caracteres, com letras minúsculas e números.</span>
+        </label>
+        <button type="submit" class="login-botao">Criar conta</button>
+      </form>
 
-      <button type="submit" class="login-botao">Entrar</button>
-    </form>
+      <form class="login-form" id="formConfirmar" hidden>
+        <p class="login-aviso" id="confirmarTexto">Enviamos um código de 6 dígitos para o seu e-mail.</p>
+        <label class="login-campo">
+          Código de confirmação
+          <input type="text" id="confirmarCodigo" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6">
+        </label>
+        <button type="submit" class="login-botao">Confirmar e entrar</button>
+        <button type="button" class="login-link" id="botaoReenviar">Não chegou? Reenviar o código</button>
+      </form>
+
+      <p class="login-aviso">Login com Amazon Cognito. A sua senha vai direto para o Cognito e nunca passa pela API da loja.</p>
+    </div>
   </main>
 
   <footer>
     <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
   </footer>
 
+  <!-- config.js é gerado pelo CDK no deploy (região e app client do Cognito) -->
+  <script src="../js/config.js" defer></script>
   <script src="../js/shared.js" defer></script>
+  <script src="../js/auth.js" defer></script>
   <script src="../js/login.js" defer></script>
 </body>
 </html>

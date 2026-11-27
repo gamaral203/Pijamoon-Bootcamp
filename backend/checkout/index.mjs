@@ -6,9 +6,12 @@
  * "PedidoRecebido" no EventBridge e responde 202 Accepted. Quem cria o
  * pedido é o serviço de pedidos, depois, lendo a fila.
  *
+ * Quem é o cliente NÃO vem no corpo: vem do token do Cognito, que o API
+ * Gateway já conferiu (JWT authorizer) antes de chamar esta Lambda. Assim,
+ * ninguém consegue fazer um pedido em nome de outra pessoa.
+ *
  * Corpo esperado:
  *   {
- *     "cliente":   { "nome": "Ana", "email": "ana@exemplo.com" },
  *     "itens":     [{ "produtoId": "camisola-limonada", "tamanho": "M", "quantidade": 2 }],
  *     "entrega":   { "cep": "01001-000", "rua": "...", "numero": "10", "complemento": "",
  *                    "bairro": "...", "cidade": "...", "estado": "SP" },
@@ -70,12 +73,7 @@ const texto = (valor, max = 120) => typeof valor === "string" && valor.trim().le
  */
 export function validarPedido(corpo, produtos) {
   const erros = [];
-  const { cliente, itens, entrega, pagamento } = corpo ?? {};
-
-  if (!texto(cliente?.nome)) erros.push("Informe o seu nome.");
-  if (!texto(cliente?.email) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) {
-    erros.push("O e-mail do cadastro é inválido.");
-  }
+  const { itens, entrega, pagamento } = corpo ?? {};
 
   if (!Array.isArray(itens) || itens.length === 0) {
     erros.push("O carrinho está vazio.");
@@ -120,7 +118,6 @@ export function validarPedido(corpo, produtos) {
   const total = Math.round(itensConferidos.reduce((soma, item) => soma + item.subtotal, 0) * 100) / 100;
   return {
     pedido: {
-      cliente: { nome: cliente.nome.trim(), email: cliente.email.trim().toLowerCase() },
       itens: itensConferidos,
       total,
       entrega: Object.fromEntries(
@@ -131,7 +128,26 @@ export function validarPedido(corpo, produtos) {
   };
 }
 
+/**
+ * Lê o cliente das "claims" do token. O API Gateway só chama esta Lambda
+ * depois de validar a assinatura, o emissor (o nosso User Pool), o público
+ * (o nosso app client) e a validade do token; aqui só lemos o conteúdo.
+ *   sub   → id único e permanente do usuário no Cognito
+ *   email → e-mail confirmado no cadastro
+ *   name  → nome informado no cadastro
+ */
+export function clienteDoToken(evento) {
+  const claims = evento?.requestContext?.authorizer?.jwt?.claims ?? {};
+  if (!claims.sub || !claims.email) return null;
+  return { id: claims.sub, nome: claims.name ?? "", email: String(claims.email).toLowerCase() };
+}
+
 export const handler = async (evento) => {
+  // Defesa extra: se a rota for configurada sem o authorizer por engano,
+  // não há cliente no token e o pedido é recusado.
+  const cliente = clienteDoToken(evento);
+  if (!cliente) return resposta(401, { erro: "Faça login para finalizar a compra." });
+
   let corpo;
   try {
     corpo = JSON.parse(evento.body ?? "");
@@ -154,7 +170,7 @@ export const handler = async (evento) => {
           EventBusName: process.env.NOME_BARRAMENTO,
           Source: "pijamoon.checkout",
           DetailType: "PedidoRecebido",
-          Detail: JSON.stringify({ pedidoId, criadoEm, ...pedido }),
+          Detail: JSON.stringify({ pedidoId, criadoEm, cliente, ...pedido }),
         },
       ],
     }),

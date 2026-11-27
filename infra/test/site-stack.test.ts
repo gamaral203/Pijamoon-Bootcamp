@@ -7,7 +7,7 @@ import { LIMITE_DISJUNTOR_BYTES_POR_MINUTO, SiteStack } from '../lib/site-stack'
 const app = new cdk.App();
 const backend = new PijamoonStack(app, 'TesteBackend');
 const template = Template.fromStack(
-  new SiteStack(app, 'TesteSite', { api: backend.api, emailAlertas: 'teste@exemplo.com' }),
+  new SiteStack(app, 'TesteSite', { api: backend.api, idClienteCognito: backend.idClienteCognito, emailAlertas: 'teste@exemplo.com' }),
 );
 
 test('não usa CloudFront (bloqueado na conta do desafio)', () => {
@@ -88,4 +88,14 @@ test('nenhum grupo de logs fica para trás no cdk destroy', () => {
     expect(grupo.DeletionPolicy).toBe('Delete');
     expect(grupo.Properties.RetentionInDays).toBe(7);
   }
+});
+
+test('publica o js/config.js com a região e o app client do Cognito', () => {
+  const [copia] = Object.values(template.findResources('Custom::CDKBucketDeployment'));
+  // Source.data vira um segundo pacote (zip) na cópia: um para o site e outro para o config.js
+  expect(copia.Properties.SourceObjectKeys).toHaveLength(2);
+  // os valores entram no deploy: a região da conta e o id do app client, importado da stack do back-end
+  const marcadores = JSON.stringify(copia.Properties.SourceMarkers);
+  expect(marcadores).toContain('AWS::Region');
+  expect(marcadores).toMatch(/Fn::ImportValue.*ClienteSite/);
 });

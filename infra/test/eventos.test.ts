@@ -15,9 +15,31 @@ function acoesDa(nomeLogico: string): string[] {
   );
 }
 
-test('expõe POST /api/checkout e GET /api/orders/{pedidoId}', () => {
-  template.hasResourceProperties('AWS::ApiGatewayV2::Route', { RouteKey: 'POST /api/checkout' });
-  template.hasResourceProperties('AWS::ApiGatewayV2::Route', { RouteKey: 'GET /api/orders/{pedidoId}' });
+test('o checkout e as consultas de pedidos exigem o token do Cognito', () => {
+  for (const rota of ['POST /api/checkout', 'GET /api/orders', 'GET /api/orders/{pedidoId}']) {
+    template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+      RouteKey: rota,
+      AuthorizationType: 'JWT',
+      AuthorizerId: Match.anyValue(),
+    });
+  }
+});
+
+test('o catálogo continua aberto, sem login', () => {
+  const [rota] = Object.values(
+    template.findResources('AWS::ApiGatewayV2::Route', { Properties: { RouteKey: 'GET /api/products' } }),
+  );
+  expect(rota.Properties.AuthorizationType ?? 'NONE').toBe('NONE');
+});
+
+test('a tabela de pedidos tem o índice por cliente (GSI1)', () => {
+  template.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
+    GlobalSecondaryIndexes: [
+      Match.objectLike({ IndexName: 'GSI1', KeySchema: [{ AttributeName: 'GSI1PK', KeyType: 'HASH' }, { AttributeName: 'GSI1SK', KeyType: 'RANGE' }] }),
+    ],
+    KeySchema: [{ AttributeName: 'PK', KeyType: 'HASH' }, { AttributeName: 'SK', KeyType: 'RANGE' }],
+    TableName: Match.absent(),
+  });
 });
 
 test('cria um barramento de eventos próprio da loja', () => {

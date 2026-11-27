@@ -925,8 +925,7 @@ body {
   color: var(--cor-botao-primario-texto);
 }
 
-/* Página de login (login/index.html) — simulado no localStorage, sem
-   servidor nem senha real por trás (ver nota em ts/shared.ts) */
+/* Página de login (login/index.html) — login com Amazon Cognito (ver ts/auth.ts) */
 
 .login-pagina {
   max-width: 400px;
@@ -1016,6 +1015,92 @@ body {
 
 .login-botao:hover {
   transform: translateY(-1px);
+}
+
+.login-botao:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+/* Login com Cognito: abas Entrar / Criar conta, mensagens e o link de reenviar */
+
+.login-abas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--cor-hover-sutil);
+}
+
+.login-aba {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  color: var(--cor-texto);
+  font-family: var(--fonte-corpo);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.login-aba.ativa {
+  background: var(--cor-superficie);
+  color: var(--cor-texto-forte);
+  box-shadow: var(--sombra);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-form[hidden] {
+  display: none;
+}
+
+.login-dica {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.login-mensagem {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-forte);
+}
+
+.login-mensagem-erro {
+  border: 1px solid rgba(214, 69, 69, 0.45);
+  background: rgba(214, 69, 69, 0.1);
+}
+
+.login-mensagem-sucesso {
+  border: 1px solid rgba(46, 160, 67, 0.45);
+  background: rgba(46, 160, 67, 0.12);
+}
+
+.login-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--cor-texto);
+  font-family: var(--fonte-corpo);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
+.login-link:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* Página de carrinho (carrinho/index.html) */
@@ -1254,6 +1339,84 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .pedido-status-processando::before { animation: none; }
+}
+
+.pedido-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Página "Meus pedidos" (pedidos/index.html): um cartão por pedido */
+
+.pedidos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pedido-cartao {
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 1.1rem 1.25rem;
+}
+
+.pedido-cartao-topo,
+.pedido-cartao-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pedido-cartao-topo .pedido-status {
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.pedido-cartao-data {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cor-texto-forte);
+}
+
+.pedido-cartao-itens {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--cor-borda-sutil);
+  border-bottom: 1px solid var(--cor-borda-sutil);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.pedido-cartao-itens li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pedido-cartao-rodape {
+  font-size: 0.85rem;
+}
+
+.pedido-cartao-numero {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.pedido-cartao-total {
+  font-size: 1rem;
+  color: var(--cor-texto-forte);
 }
 
 /* Página de checkout (checkout/index.html) */

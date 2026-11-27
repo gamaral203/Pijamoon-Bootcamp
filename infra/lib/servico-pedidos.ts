@@ -19,6 +19,8 @@ export const EVENTO_PEDIDO = { source: 'pijamoon.checkout', detailType: 'PedidoR
 export interface ServicoPedidosProps {
   readonly api: apigwv2.HttpApi;
   readonly barramento: events.IEventBus;
+  /** A catraca do Cognito: as consultas de pedidos exigem login. */
+  readonly authorizer: apigwv2.IHttpRouteAuthorizer;
 }
 
 /**
@@ -41,10 +43,19 @@ export class ServicoPedidos extends Construct {
     super(escopo, id);
 
     // Tabela de pedidos: PK = PEDIDO#<id>, SK = META (o mesmo desenho do catálogo).
+    //   GSI1PK = CLIENTE#<sub do Cognito>, GSI1SK = data do pedido
+    //   → "meus pedidos" com Query, do mais novo ao mais antigo, sem Scan
     this.tabela = new dynamodb.TableV2(this, 'TabelaPedidos', {
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
       billing: dynamodb.Billing.onDemand(),
+      globalSecondaryIndexes: [
+        {
+          indexName: 'GSI1',
+          partitionKey: { name: 'GSI1PK', type: dynamodb.AttributeType.STRING },
+          sortKey: { name: 'GSI1SK', type: dynamodb.AttributeType.STRING },
+        },
+      ],
       removalPolicy: cdk.RemovalPolicy.DESTROY, // projeto de estudo
     });
 
@@ -106,15 +117,25 @@ export class ServicoPedidos extends Construct {
      * ------------------------------------------------------------------ */
     this.funcaoConsulta = funcaoNode(this, 'FuncaoConsultaPedido', {
       pasta: 'pedidos-consulta',
-      descricao: 'Consulta um pedido pelo número (GET /api/orders/{pedidoId})',
+      descricao: 'Consulta os pedidos do cliente logado (GET /api/orders e /api/orders/{pedidoId})',
       ambiente: { TABELA_PEDIDOS: this.tabela.tableName },
     });
     this.tabela.grantReadData(this.funcaoConsulta);
 
+    // As duas rotas usam a mesma Lambda e exigem login: o cliente é o "sub"
+    // do token, então cada um só enxerga os próprios pedidos.
+    const integracaoConsulta = new HttpLambdaIntegration('IntegracaoConsultaPedido', this.funcaoConsulta);
     props.api.addRoutes({
       path: '/api/orders/{pedidoId}',
       methods: [apigwv2.HttpMethod.GET],
-      integration: new HttpLambdaIntegration('IntegracaoConsultaPedido', this.funcaoConsulta),
+      integration: integracaoConsulta,
+      authorizer: props.authorizer,
+    });
+    props.api.addRoutes({
+      path: '/api/orders',
+      methods: [apigwv2.HttpMethod.GET],
+      integration: integracaoConsulta,
+      authorizer: props.authorizer,
     });
   }
 }

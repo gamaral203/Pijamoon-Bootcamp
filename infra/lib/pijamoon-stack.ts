@@ -13,6 +13,7 @@ import { Construct } from 'constructs';
 import { apagarLogsNoDestroy } from './regras';
 import { ServicoCheckout } from './servico-checkout';
 import { ServicoPedidos } from './servico-pedidos';
+import { Autenticacao } from './autenticacao';
 
 /** Raiz do repositório, para achar backend/ e os dados a partir de infra/lib/. */
 const RAIZ = path.join(__dirname, '..', '..');
@@ -39,6 +40,8 @@ export const LIMITE_API = { porSegundo: 2, pico: 10 };
 export class PijamoonStack extends cdk.Stack {
   /** A API da loja, usada pela stack do site para encaminhar /api/*. */
   public readonly api: apigwv2.HttpApi;
+  /** O id do app client do Cognito: o site precisa dele para o login. */
+  public readonly idClienteCognito: string;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -166,8 +169,13 @@ export class PijamoonStack extends cdk.Stack {
       description: 'Eventos de negócio da Pijamoon (ex.: PedidoRecebido)',
     });
 
-    new ServicoCheckout(this, 'Checkout', { api, barramento, tabelaProdutos });
-    const pedidos = new ServicoPedidos(this, 'Pedidos', { api, barramento });
+    // Login com Cognito: o checkout e os pedidos exigem um token válido.
+    const autenticacao = new Autenticacao(this, 'Autenticacao');
+    this.idClienteCognito = autenticacao.clienteSite.userPoolClientId;
+    const authorizer = autenticacao.authorizer;
+
+    new ServicoCheckout(this, 'Checkout', { api, barramento, tabelaProdutos, authorizer });
+    const pedidos = new ServicoPedidos(this, 'Pedidos', { api, barramento, authorizer });
 
     apagarLogsNoDestroy(this);
 
@@ -181,6 +189,8 @@ export class PijamoonStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'NomeTabelaPedidos', { value: pedidos.tabela.tableName });
     new cdk.CfnOutput(this, 'UrlFilaPedidos', { value: pedidos.fila.queueUrl });
     new cdk.CfnOutput(this, 'UrlDlqPedidos', { value: pedidos.dlq.queueUrl });
+    new cdk.CfnOutput(this, 'IdUserPool', { value: autenticacao.userPool.userPoolId });
+    new cdk.CfnOutput(this, 'IdClienteCognito', { value: autenticacao.clienteSite.userPoolClientId });
   }
 }
 
