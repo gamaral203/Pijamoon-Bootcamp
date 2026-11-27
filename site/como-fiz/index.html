@@ -75,7 +75,7 @@
     <section class="diagrama-bff" aria-label="Arquitetura atual">
       <h2>A arquitetura hoje</h2>
       <ul class="como-fiz-lista">
-        <li><strong>Site:</strong> Amplify Hosting, com CDN e HTTPS. A conta do desafio bloqueia o CloudFront.</li>
+        <li><strong>Site:</strong> CloudFront na frente de um S3 privado. Enquanto o CloudFront esteve bloqueado na conta, o site rodou no Amplify; quando liberaram, voltei para o CloudFront, que tem 1 TB por mês de tráfego grátis.</li>
         <li><strong>API:</strong> API Gateway com limite de requisições. O checkout e os pedidos exigem login (Amazon Cognito, token JWT).</li>
         <li><strong>Catálogo (síncrono):</strong> Lambda + DynamoDB, com cache de 60 s na memória da Lambda.</li>
         <li><strong>Checkout (assíncrono):</strong> responde na hora com <code>202 Accepted</code> e publica um evento. EventBridge → fila SQS (com DLQ) → Lambda grava o pedido, uma vez só.</li>
