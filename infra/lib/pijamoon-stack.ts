@@ -8,8 +8,11 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import * as events from 'aws-cdk-lib/aws-events';
 import { Construct } from 'constructs';
 import { apagarLogsNoDestroy } from './regras';
+import { ServicoCheckout } from './servico-checkout';
+import { ServicoPedidos } from './servico-pedidos';
 
 /** Raiz do repositório, para achar backend/ e os dados a partir de infra/lib/. */
 const RAIZ = path.join(__dirname, '..', '..');
@@ -150,6 +153,22 @@ export class PijamoonStack extends cdk.Stack {
 
     this.api = api;
 
+    /* ------------------------------------------------------------------
+     * Checkout e pedidos: a parte orientada a eventos
+     *
+     *   POST /api/checkout → Lambda checkout → (evento) EventBridge
+     *     → regra → fila SQS (+ DLQ) → Lambda processa → tabela de pedidos
+     * ------------------------------------------------------------------ */
+
+    // O barramento de eventos da loja: um "quadro de avisos" próprio, separado
+    // do barramento padrão da conta (onde chegam os eventos dos serviços AWS).
+    const barramento = new events.EventBus(this, 'BarramentoLoja', {
+      description: 'Eventos de negócio da Pijamoon (ex.: PedidoRecebido)',
+    });
+
+    new ServicoCheckout(this, 'Checkout', { api, barramento, tabelaProdutos });
+    const pedidos = new ServicoPedidos(this, 'Pedidos', { api, barramento });
+
     apagarLogsNoDestroy(this);
 
     /* ------------------------------------------------------------------
@@ -157,6 +176,11 @@ export class PijamoonStack extends cdk.Stack {
      * ------------------------------------------------------------------ */
     new cdk.CfnOutput(this, 'UrlCatalogo', { value: `${api.apiEndpoint}/api/products` });
     new cdk.CfnOutput(this, 'NomeTabelaProdutos', { value: tabelaProdutos.tableName });
+    new cdk.CfnOutput(this, 'UrlCheckout', { value: `${api.apiEndpoint}/api/checkout` });
+    new cdk.CfnOutput(this, 'NomeBarramento', { value: barramento.eventBusName });
+    new cdk.CfnOutput(this, 'NomeTabelaPedidos', { value: pedidos.tabela.tableName });
+    new cdk.CfnOutput(this, 'UrlFilaPedidos', { value: pedidos.fila.queueUrl });
+    new cdk.CfnOutput(this, 'UrlDlqPedidos', { value: pedidos.dlq.queueUrl });
   }
 }
 

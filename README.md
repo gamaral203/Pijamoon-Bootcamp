@@ -19,8 +19,8 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 O desenho mostra a arquitetura completa planejada. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
-- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), alerta de custo no AWS Budgets e as stacks CDK.
-- **Próximas etapas:** checkout com EventBridge e SQS, serviço de pedidos, Cognito e CI/CD.
+- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos, alerta de custo no AWS Budgets e as stacks CDK.
+- **Próximas etapas:** checkout integrado ao site, Cognito e CI/CD.
 - **Extra:** mensagem personalizada com Amazon Bedrock.
 
 Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
@@ -213,17 +213,26 @@ Na conta do desafio, que bloqueia o CloudFront (veja as [decisões de arquitetur
 
 **Conceitos:** síncrono x assíncrono · EventBridge (bus, regra e alvo) · SQS · DLQ · entrega "pelo menos uma vez" · idempotência
 
-- [ ] Criar o event bus e a regra do evento de pedido
-- [ ] Criar `POST /api/checkout`: validar o pedido, publicar o evento e responder `202 Accepted`
-- [ ] Criar a fila de pedidos com DLQ
-- [ ] Criar a Lambda que lê a fila e grava na tabela de pedidos
-- [ ] Garantir que um evento repetido não gere um pedido duplicado
-- [ ] Expor `GET /api/orders` para consultar os pedidos
+- [x] Criar o event bus e a regra do evento de pedido
+- [x] Criar `POST /api/checkout`: validar o pedido, publicar o evento e responder `202 Accepted`
+- [x] Criar a fila de pedidos com DLQ
+- [x] Criar a Lambda que lê a fila e grava na tabela de pedidos
+- [x] Garantir que um evento repetido não gere um pedido duplicado
+- [x] Expor `GET /api/orders/{pedidoId}` para consultar um pedido pelo número
+
+A lista "meus pedidos" (`GET /api/orders`) passou para a Etapa 7: sem login, ela teria que filtrar por um e-mail enviado pelo site, e qualquer pessoa veria os pedidos de outra. Com o Cognito, o cliente é identificado pelo token.
+
+**Testado na conta do desafio, pela URL pública:**
+
+- Pedido válido: `202` com o número do pedido, e `CONFIRMADO` na consulta menos de 5 s depois.
+- O preço da camisola foi enviado como R$ 0,01, e o pedido foi gravado com o preço do catálogo, R$ 79,90.
+- Pedido inválido: `400` com a lista dos problemas, sem publicar evento.
+- Idempotência: o mesmo evento republicado no barramento chegou à Lambda (log "repetido") e o pedido não foi regravado. A tabela ficou com 1 pedido, e a fila e a DLQ ficaram vazias.
 
 ### Etapa 6 · Front integrado
 
 - [ ] Fazer o checkout do site chamar a API e mostrar o número do pedido
-- [ ] Mostrar os pedidos do cliente no site
+- [ ] Mostrar o andamento do pedido no site (processando → confirmado)
 - [ ] Testar o fluxo completo pela URL pública
 
 ### Etapa 7 · Login com Amazon Cognito
@@ -234,6 +243,7 @@ Na conta do desafio, que bloqueia o CloudFront (veja as [decisões de arquitetur
 - [ ] Trocar o login simulado do site pelo Cognito
 - [ ] Proteger o checkout e a consulta de pedidos com o JWT authorizer
 - [ ] Identificar o cliente pelo token, e não por um dado enviado pelo site
+- [ ] Expor `GET /api/orders` com os pedidos do cliente logado e mostrar a lista no site
 
 ### Etapa 8 · Conta do desafio e CI/CD
 

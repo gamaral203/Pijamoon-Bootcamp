@@ -13,3 +13,6 @@ Thumbs.db
 
 # pasta montada pelo workflow de deploy
 site/dist/
+
+# Caderno de estudo pessoal: fica só na máquina, não vai para o GitHub
+docs/anotacoes.md
