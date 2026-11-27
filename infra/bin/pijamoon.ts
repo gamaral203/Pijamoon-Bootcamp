@@ -33,6 +33,7 @@ const emailAlertas: string | undefined = app.node.tryGetContext('emailAlertas');
 // Back-end: catálogo (tabela, Lambda e API). Sobe em qualquer conta.
 const backend = new PijamoonStack(app, 'PijamoonStack', {
   env,
+  emailAlertas,
   description: 'Pijamoon: back-end serverless orientado a eventos (Desafio 1)',
 });
 

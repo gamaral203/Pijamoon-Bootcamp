@@ -14,6 +14,7 @@ import { apagarLogsNoDestroy } from './regras';
 import { ServicoCheckout } from './servico-checkout';
 import { ServicoPedidos } from './servico-pedidos';
 import { Autenticacao } from './autenticacao';
+import { Monitoramento } from './monitoramento';
 
 /** Raiz do repositório, para achar backend/ e os dados a partir de infra/lib/. */
 const RAIZ = path.join(__dirname, '..', '..');
@@ -37,13 +38,18 @@ export const LIMITE_API = { porSegundo: 2, pico: 10 };
  * A hospedagem do site fica em outra stack (PijamoonSite), porque depende
  * do que a conta permite: o back-end sobe em qualquer conta.
  */
+export interface PijamoonStackProps extends cdk.StackProps {
+  /** Opcional: quem recebe os alarmes do back-end por e-mail. */
+  readonly emailAlertas?: string;
+}
+
 export class PijamoonStack extends cdk.Stack {
   /** A API da loja, usada pela stack do site para encaminhar /api/*. */
   public readonly api: apigwv2.HttpApi;
   /** O id do app client do Cognito: o site precisa dele para o login. */
   public readonly idClienteCognito: string;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: PijamoonStackProps) {
     super(scope, id, props);
 
     /* ------------------------------------------------------------------
@@ -176,6 +182,14 @@ export class PijamoonStack extends cdk.Stack {
 
     new ServicoCheckout(this, 'Checkout', { api, barramento, tabelaProdutos, authorizer });
     const pedidos = new ServicoPedidos(this, 'Pedidos', { api, barramento, authorizer });
+
+    // Alarmes: DLQ com mensagem, fila parada e erros 5xx na API, por e-mail.
+    new Monitoramento(this, 'Monitoramento', {
+      api,
+      filaPedidos: pedidos.fila,
+      dlqPedidos: pedidos.dlq,
+      emailAlertas: props?.emailAlertas,
+    });
 
     apagarLogsNoDestroy(this);
 
