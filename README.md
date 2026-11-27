@@ -21,7 +21,7 @@ O desenho mostra a arquitetura no ar, conferida na Etapa 9 e atualizada a cada e
 
 - **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, login com Amazon Cognito, alerta de custo no AWS Budgets e as stacks CDK.
 - **Próximas etapas:** CI/CD.
-- **Extras no ar:** alarmes do CloudWatch e mensagem personalizada no pedido com Amazon Bedrock (segundo consumidor do evento de pedido).
+- **Extras no ar:** alarmes do CloudWatch, carrinho salvo no servidor e mensagem personalizada no pedido com Amazon Bedrock (segundo consumidor do evento de pedido).
 
 Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
 
@@ -291,9 +291,10 @@ aws sqs start-message-move-task --source-arn <ARN da DLQ> --destination-arn <ARN
 
 ### Extras, se houver tempo
 
-- [ ] Carrinho no back-end, com serviço e tabela próprios
+- [x] Carrinho no back-end, com serviço e tabela próprios
+
+Com login, o carrinho também fica salvo no servidor (`GET` e `PUT /api/cart`, com JWT) e acompanha o cliente em qualquer aparelho. Ao entrar, o carrinho montado no navegador é mesclado com o salvo, somando as quantidades. Cada mudança é enviada com um atraso de 0,8 s (*debounce*), para vários cliques virarem uma requisição só, dentro do throttling. O serviço valida só o formato: quem confere produto, tamanho e preço continua sendo o checkout, a autoridade, e assim o carrinho não lê a tabela de outro serviço. O carrinho esquecido some em 30 dias (TTL). Sem login, tudo funciona como antes, só no navegador.
 - [x] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
-- [ ] Ambientes separados de dev e prod
 - [x] Mensagem personalizada no pedido com Amazon Bedrock, como um segundo consumidor do evento de pedido
 
 O serviço de mensagens tem fila, DLQ, Lambdas e tabela próprias. A mensagem é gerada pelo Amazon Nova Micro, o modelo mais barato disponível na conta, com no máximo 200 mensagens por dia. O mesmo evento repetido não chama o Bedrock de novo, e se o modelo falhar vai uma mensagem padrão: o recado é um enfeite e não pode quebrar o pedido. Contra injeção de prompt, o nome do cliente entra limpo e curto, num bloco marcado como dados, e o site mostra a resposta como texto puro. O recado aparece na tela de pedido recebido, pela rota `GET /api/orders/{id}/mensagem`, que exige login e só responde ao dono do pedido.

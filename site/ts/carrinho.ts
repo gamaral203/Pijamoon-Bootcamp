@@ -154,7 +154,9 @@
   /** Ponto de entrada: sincroniza o cabeçalho, carrega o catálogo (pra cruzar com o carrinho salvo) e desenha a página. */
   async function iniciarCarrinho(): Promise<void> {
     atualizarHeaderConta(RAIZ);
-    catalogo = await carregarProdutos();
+    // logado: espera o carrinho salvo no servidor (ts/carrinho-sync.ts)
+    [catalogo] = await Promise.all([carregarProdutos(), carrinhoSincronizado]);
+    atualizarHeaderConta(RAIZ);
     renderizarCarrinho();
   }
 

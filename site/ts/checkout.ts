@@ -312,6 +312,10 @@
       return;
     }
 
+    // logado: espera o carrinho salvo no servidor antes de conferir (ts/carrinho-sync.ts)
+    await carrinhoSincronizado;
+    atualizarHeaderConta(RAIZ);
+
     if (obterCarrinho().length === 0) {
       window.location.href = `${RAIZ}carrinho/index.html`;
       return;

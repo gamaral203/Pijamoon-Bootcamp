@@ -161,6 +161,8 @@ function obterCarrinho(): ItemCarrinho[] {
 /** Sobrescreve o carrinho inteiro no localStorage com a lista dada. */
 function salvarCarrinho(itens: ItemCarrinho[]): void {
   localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
+  // avisa quem estiver ouvindo (ts/carrinho-sync.ts envia para o servidor)
+  window.dispatchEvent(new CustomEvent("pijamoon:carrinho-mudou"));
 }
 
 /**

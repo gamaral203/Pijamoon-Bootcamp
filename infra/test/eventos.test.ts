@@ -88,7 +88,7 @@ test('a consulta de pedidos só lê', () => {
 
 test('cada serviço tem a sua tabela, on-demand e apagada no cdk destroy', () => {
   const tabelas = Object.values(template.findResources('AWS::DynamoDB::GlobalTable'));
-  expect(tabelas).toHaveLength(3); // produtos, pedidos e mensagens: uma por serviço
+  expect(tabelas).toHaveLength(4); // produtos, pedidos, mensagens e carrinhos: uma por serviço
   for (const tabela of tabelas) {
     expect(tabela.DeletionPolicy).toBe('Delete');
     expect(tabela.Properties.BillingMode).toBe('PAY_PER_REQUEST');

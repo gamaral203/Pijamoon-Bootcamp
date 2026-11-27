@@ -80,6 +80,8 @@ async function entrar(email: string, senha: string): Promise<void> {
     AuthParameters: { USERNAME: email, PASSWORD: senha },
   });
   salvarSessao({ idToken: AuthenticationResult.IdToken, refreshToken: AuthenticationResult.RefreshToken });
+  // o carrinho montado antes do login se junta ao salvo no servidor (ts/carrinho-sync.ts)
+  localStorage.setItem("pijamoon_mesclar_carrinho", "1");
 }
 
 /**
