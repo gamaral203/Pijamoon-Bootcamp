@@ -48,6 +48,7 @@ A conta do projeto tem limite de **US$ 20 por mês**. A arquitetura foi pensada 
 - **Cache sem custo fixo.** O catálogo fica 60 s em cache na memória da Lambda (o DynamoDB nem é consultado) e 60 s no navegador (`Cache-Control`). Um cache dedicado (ElastiCache/Redis) cobraria por hora mesmo parado e exigiria uma VPC com NAT Gateway, o que sozinho passaria do orçamento.
 - **Proteção contra abuso.** A API aceita 2 requisições por segundo em média, com picos de 10. Acima disso, responde `429` sem chamar a Lambda. O limite do API Gateway é aproximado, não exato: num teste com 200 requisições simultâneas, entre 140 e 161 voltaram `429` (e a mudança do limite levou alguns segundos para valer). Por isso ele trabalha junto com o alerta de custo, e não sozinho.
 - **Alerta antes de estourar.** Um orçamento no AWS Budgets avisa por e-mail antes de chegar ao limite (detalhes abaixo).
+- **Problema não fica escondido.** Três alarmes do CloudWatch avisam por e-mail: mensagem na DLQ, fila de pedidos parada há mais de 5 min e 5 ou mais erros `5xx` na API em 5 min. Eles avisam também quando o problema passa.
 - **Gasto rastreável.** Todos os recursos levam as tags `projeto`, `desafio` e `gerenciado-por`, para filtrar o custo da Pijamoon no Billing.
 
 ### Alerta de custo (limite da conta)
@@ -96,7 +97,8 @@ Preços oficiais de us-east-1, consultados na API de preços da AWS (Price List)
 | EventBridge e SQS | < US$ 0,001 |
 | Logs | US$ 0,001 |
 | Site (~5 GB de páginas e imagens) | US$ 0,73 |
-| **Total** | **≈ US$ 0,74 por mês** |
+| Alarmes do CloudWatch (3 do back-end + 1 do disjuntor, US$ 0,10 cada) | US$ 0,40 |
+| **Total** | **≈ US$ 1,14 por mês** |
 
 Quase todo o custo é a entrega das imagens do site. O back-end inteiro custa menos de 2 centavos.
 
@@ -109,7 +111,7 @@ Quase todo o custo é a entrega das imagens do site. O back-end inteiro custa me
 
 O limite começou em 5 por segundo e baixou para 2 depois desta conta: US$ 18,58 ficava perto demais do teto, ainda mais com um throttling aproximado. Com 2 por segundo, mesmo um ataque contínuo fica abaixo da metade do limite, e o alerta de 25% (US$ 5) avisa bem antes.
 
-O que não entra na arquitetura por custo fixo: ElastiCache, NAT Gateway e o firewall do Amplify (AWS WAF, US$ 15 por mês).
+O que não entra na arquitetura por custo fixo: ElastiCache, NAT Gateway, o firewall do Amplify (AWS WAF, US$ 15 por mês) e um dashboard do CloudWatch (US$ 3 por mês). Os alarmes custam US$ 0,10 por mês cada, então são poucos e escolhidos.
 
 ## Decisões de arquitetura
 
@@ -288,7 +290,7 @@ aws sqs start-message-move-task --source-arn <ARN da DLQ> --destination-arn <ARN
 ### Extras, se houver tempo
 
 - [ ] Carrinho no back-end, com serviço e tabela próprios
-- [ ] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
+- [x] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
 - [ ] Ambientes separados de dev e prod
 - [ ] Mensagem personalizada no pedido com Amazon Bedrock, como um segundo consumidor do evento de pedido
 
