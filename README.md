@@ -19,7 +19,7 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 O desenho mostra a arquitetura no ar, conferida na Etapa 9 e atualizada a cada extra. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
-- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, login com Amazon Cognito, alerta de custo no AWS Budgets e as stacks CDK.
+- **Já no ar, na conta do desafio:** site no CloudFront (S3 privado com OAC) com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, login com Amazon Cognito, alerta de custo no AWS Budgets e as stacks CDK.
 - **Próximas etapas:** CI/CD.
 - **Extras no ar:** alarmes do CloudWatch, carrinho salvo no servidor e mensagem personalizada no pedido com Amazon Bedrock (segundo consumidor do evento de pedido).
 
@@ -44,7 +44,7 @@ O checkout é as duas coisas ao mesmo tempo: a resposta ao cliente é síncrona 
 
 A conta do projeto tem limite de **US$ 20 por mês**. A arquitetura foi pensada para isso:
 
-- **Só serviços cobrados por uso.** Nada fica ligado cobrando por hora: Lambda, API Gateway, DynamoDB on-demand, EventBridge, SQS, S3 e Amplify Hosting custam centavos com tráfego de demonstração.
+- **Só serviços cobrados por uso.** Nada fica ligado cobrando por hora: Lambda, API Gateway, DynamoDB on-demand, EventBridge, SQS, S3 e CloudFront custam centavos com tráfego de demonstração.
 - **Cache sem custo fixo.** O catálogo fica 60 s em cache na memória da Lambda (o DynamoDB nem é consultado) e 60 s no navegador (`Cache-Control`). Um cache dedicado (ElastiCache/Redis) cobraria por hora mesmo parado e exigiria uma VPC com NAT Gateway, o que sozinho passaria do orçamento.
 - **Proteção contra abuso.** A API aceita 2 requisições por segundo em média, com picos de 10. Acima disso, responde `429` sem chamar a Lambda. O limite do API Gateway é aproximado, não exato: num teste com 200 requisições simultâneas, entre 140 e 161 voltaram `429` (e a mudança do limite levou alguns segundos para valer). Por isso ele trabalha junto com o alerta de custo, e não sozinho.
 - **Alerta antes de estourar.** Um orçamento no AWS Budgets avisa por e-mail antes de chegar ao limite (detalhes abaixo).
@@ -84,7 +84,7 @@ Preços oficiais de us-east-1, consultados na API de preços da AWS (Price List)
 | EventBridge | US$ 1,00 por milhão de eventos |
 | SQS | US$ 0,40 por milhão de requisições |
 | CloudWatch Logs | US$ 0,50 por GB gravado |
-| Hospedagem do site (Amplify) | US$ 0,15 por GB entregue |
+| Hospedagem do site (CloudFront) | 1 TB por mês grátis (nível gratuito permanente); acima disso, a partir de US$ 0,085 por GB |
 | AWS Budgets | os dois primeiros orçamentos são grátis |
 
 **Cenário de demonstração:** 5.000 visitas e 300 pedidos no mês.
@@ -96,11 +96,11 @@ Preços oficiais de us-east-1, consultados na API de preços da AWS (Price List)
 | DynamoDB (com o cache, quase nenhuma leitura) | < US$ 0,001 |
 | EventBridge e SQS | < US$ 0,001 |
 | Logs | US$ 0,001 |
-| Site (~5 GB de páginas e imagens) | US$ 0,73 |
+| Site (~5 GB de páginas e imagens, dentro da franquia de 1 TB do CloudFront) | US$ 0,00 |
 | Alarmes do CloudWatch (3 do back-end + 1 do disjuntor, US$ 0,10 cada) | US$ 0,40 |
-| **Total** | **≈ US$ 1,14 por mês** |
+| **Total** | **≈ US$ 0,41 por mês** |
 
-Quase todo o custo é a entrega das imagens do site. O back-end inteiro custa menos de 2 centavos.
+Com o site dentro da franquia gratuita do CloudFront, quase todo o custo são os alarmes. O back-end inteiro custa menos de 2 centavos.
 
 **Pior caso:** alguém chamando a API sem parar, no limite do throttling, o mês inteiro.
 
@@ -113,53 +113,68 @@ O limite começou em 5 por segundo e baixou para 2 depois desta conta: US$ 18,58
 
 **Bedrock com teto.** Cada mensagem custa cerca de US$ 0,00003 (Amazon Nova Micro: US$ 0,035 por milhão de tokens de entrada e US$ 0,14 por milhão de saída). Mas alguém criando pedidos sem parar chegaria a uns US$ 150 no mês. Por isso há um limite de **200 mensagens por dia**, com um contador atômico no DynamoDB. Passou disso, vai uma mensagem padrão sem chamar o modelo, e o pior caso fica em cerca de US$ 0,20 por mês.
 
-O que não entra na arquitetura por custo fixo: ElastiCache, NAT Gateway, o firewall do Amplify (AWS WAF, US$ 15 por mês) e um dashboard do CloudWatch (US$ 3 por mês). Os alarmes custam US$ 0,10 por mês cada, então são poucos e escolhidos.
+O que não entra na arquitetura por custo fixo: ElastiCache, NAT Gateway, o firewall (AWS WAF, US$ 15 por mês) e um dashboard do CloudWatch (US$ 3 por mês). Os alarmes custam US$ 0,10 por mês cada, então são poucos e escolhidos.
 
 ## Decisões de arquitetura
 
-### Hospedagem do site: Amplify Hosting com disjuntor de custo
+### Hospedagem do site: CloudFront com disjuntor de custo
 
-**Decisão:** Gabriel Amaral, autor do projeto, em 27/11/2026.
+**Decisões:** Gabriel Amaral, autor do projeto. A primeira em 27/11/2026, quando o CloudFront estava bloqueado na conta; a segunda no mesmo dia, quando ele foi liberado.
 
-**Contexto.** A conta AWS do desafio tem uma regra da organização (SCP) que bloqueia todo o CloudFront, e o site estava publicado com CloudFront + S3 privado com OAC. Era preciso outra forma de entregar o site, dentro do limite de US$ 20 por mês.
+#### 1ª decisão: Amplify Hosting, enquanto o CloudFront estava bloqueado
 
-**Opções consideradas:**
+A conta do desafio tinha uma regra da organização (SCP) que negava todo o CloudFront. As opções avaliadas foram:
 
-| Opção | HTTPS | `/api/*` no mesmo domínio | Tudo no CDK e na AWS | Observação |
-| --- | --- | --- | --- | --- |
-| S3 como site estático (bucket público) | ❌ só `http://` | ❌ precisaria de CORS | ✅ | Permitido na conta, mas sem HTTPS |
-| **Amplify Hosting** | ✅ | ✅ regra de proxy | ✅ | CDN e HTTPS gerenciados pela AWS |
-| Vercel, Netlify ou outro serviço de fora | ✅ | ✅ | ❌ | O desafio pede a loja publicada na AWS |
+| Opção | HTTPS | `/api/*` no mesmo domínio | Tudo no CDK e na AWS |
+| --- | --- | --- | --- |
+| S3 como site estático (bucket público) | ❌ só `http://` | ❌ precisaria de CORS | ✅ |
+| **Amplify Hosting (escolhida)** | ✅ | ✅ regra de proxy | ✅ |
+| Vercel, Netlify ou outro serviço de fora | ✅ | ✅ | ❌ (o desafio pede a loja na AWS) |
 
-**Decisão.** Escolhi o **Amplify Hosting**. Ele mantém o HTTPS, mantém `/api/*` no mesmo domínio (o front não muda e não precisa de CORS) e continua inteiro no CDK: o `cdk deploy` copia o site para um bucket privado e manda o Amplify publicar a partir dele.
+O Amplify cobra US$ 0,15 por GB entregue e não tem limite de requisições. Para não pagar o firewall (AWS WAF, US$ 15 por mês fixos), entrou um **disjuntor de custo**, que tirava o site do ar se o tráfego disparasse. Ele foi testado na conta: com o alarme forçado, o site saiu do ar em menos de 10 s, e o e-mail de alarme chegou.
 
-**O risco que vem junto.** O Amplify cobra US$ 0,15 por GB entregue e, ao contrário da API, não tem limite de requisições. A única proteção que barra o ataque na hora é o firewall (AWS WAF), que custa **US$ 15 por mês fixo**, quase todo o limite da conta. Sem ele, um script baixando o site em loop numa conexão rápida chegaria a US$ 10 em minutos ou poucas horas.
+#### 2ª decisão: voltar para o CloudFront, quando ele foi liberado
 
-**Como tratei o risco.** Em vez de pagar o WAF, decidi colocar um **disjuntor de custo**, que não impede o ataque mas limita o prejuízo:
+Com o CloudFront liberado, decidi migrar, porque ele **diminui o custo e o risco**:
+
+| | Amplify Hosting | **CloudFront (atual)** |
+| --- | --- | --- |
+| Tráfego do site | US$ 0,15 por GB, desde o primeiro byte | **1 TB por mês grátis**, para sempre (nível gratuito permanente) |
+| Um ataque de download precisa de | ~67 GB para custar US$ 10 | mais de 1 TB só para começar a custar |
+| Peças | App, branch e publicação por custom resource | Distribuição, OAC e uma CloudFront Function |
+
+O desenho final:
+
+- **Bucket privado com Origin Access Control:** só o CloudFront lê o bucket.
+- **`/api/*` vai para o API Gateway sem cache,** com todos os métodos (o checkout usa `POST` e o carrinho usa `PUT`) e o cabeçalho `Authorization` do login repassado.
+- **Uma CloudFront Function de poucas linhas** completa os endereços de pasta (`/pedidos/` vira `/pedidos/index.html`), porque o S3 privado não faz isso sozinho. Ela fica dentro do nível gratuito de 2 milhões de execuções por mês.
+- **O preço da troca:** a URL da loja mudou, de `main.<id>.amplifyapp.com` para `<id>.cloudfront.net`.
+
+#### O disjuntor, adaptado ao CloudFront
+
+Mesmo com 1 TB grátis, o disjuntor continua: ele é o que garante que um ataque não vira conta.
 
 ```
-CloudWatch: o site entregou mais de 100 MB no último minuto?
+CloudWatch: o CloudFront entregou mais de 100 MB no último minuto?
    → alarme
    → SNS (avisa a Lambda e o e-mail)
-   → Lambda "disjuntor" liga uma senha aleatória no Amplify
-   → o site passa a responder 401, de poucos bytes
+   → Lambda "disjuntor" desliga a distribuição
+   → a borda para de entregar tudo, inclusive o que estava em cache
 ```
 
-- **Por que olhar o tráfego, e não o custo:** o AWS Budgets atualiza os custos poucas vezes por dia, com horas de atraso. Um ataque rápido passaria do limite antes de o alerta chegar. A métrica de bytes entregues do Amplify chega ao CloudWatch a cada minuto.
+- **Por que olhar o tráfego, e não o custo:** o AWS Budgets atualiza os custos poucas vezes por dia, com horas de atraso. A métrica `BytesDownloaded` do CloudFront chega a cada minuto.
+- **Um detalhe que o teste pegou:** o CloudFront publica as métricas com duas dimensões, `DistributionId` e `Region=Global`. O atalho do CDK usa só a primeira, e o alarme ficaria sem dados. Por isso a métrica é montada à mão.
 - **Por que 100 MB por minuto:** são cerca de 80 downloads completos do site (1,2 MB) por minuto, algo que gente navegando não alcança.
-- **Quanto um ataque ainda pode custar:** de centavos, numa conexão comum, a alguns dólares, num servidor muito rápido, até o disjuntor desarmar.
-- **Quanto o disjuntor custa:** cerca de US$ 0,10 por mês, o preço do alarme. O SNS e a Lambda só cobram se dispararem.
-- **O que fica no ar:** só o site sai. A API, que já tem o próprio throttling, e o alerta do Budgets continuam funcionando.
-
-**Testado de verdade.** Com o alarme forçado para `ALARM` (`aws cloudwatch set-alarm-state`, sem gerar tráfego), o site passou a responder `401` em menos de 10 segundos e a Lambda registrou "Disjuntor desarmado" no log. Depois do comando abaixo, o site voltou a responder `200`.
+- **Quanto custa:** cerca de US$ 0,10 por mês, o preço do alarme. O SNS e a Lambda só cobram se dispararem.
+- **O que fica no ar:** só o site sai. A API direta, o alerta do Budgets e o resto do back-end continuam.
 
 Para religar o site depois de entender o que aconteceu:
 
 ```bash
-aws amplify update-branch --app-id <IdAppAmplify> --branch-name main --no-enable-basic-auth --profile desafio
+aws lambda invoke --function-name <NomeFuncaoDisjuntor> --cli-binary-format raw-in-base64-out --payload '{"acao":"religar"}' resposta.json --profile desafio
 ```
 
-O `IdAppAmplify` aparece no fim do deploy da stack `PijamoonSite`.
+O `NomeFuncaoDisjuntor` aparece no fim do deploy da stack `PijamoonSite`. A distribuição leva alguns minutos para voltar a responder em todos os pontos da borda.
 
 ## Roadmap
 
@@ -197,11 +212,12 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 - [x] Encaminhar `/api/*` para o API Gateway, sem cache
 - [x] Publicar o site pelo CDK e abrir a loja pela URL pública
 
-Na conta do desafio, que bloqueia o CloudFront (veja as [decisões de arquitetura](#decisões-de-arquitetura)):
+Na conta do desafio, que bloqueou o CloudFront até 27/11/2026 (veja as [decisões de arquitetura](#decisões-de-arquitetura)):
 
 - [x] Trocar a hospedagem para o Amplify Hosting, com `/api/*` encaminhado para a API
 - [x] Criar o disjuntor de custo: alarme de tráfego → SNS → Lambda que tira o site do ar
 - [x] Abrir a loja pela URL do Amplify
+- [x] Voltar para o CloudFront quando ele foi liberado, com a CloudFront Function de índice de pasta e o disjuntor adaptado
 
 ### Etapa 4 · Custos, proteção e cache
 
@@ -307,7 +323,7 @@ backend/    código das Lambdas: catalogo, checkout, pedidos-processa,
             pedidos-consulta e disjuntor
 infra/      AWS CDK em TypeScript, com testes (jest):
               PijamoonStack   back-end: API, catálogo, checkout, pedidos e Cognito
-              PijamoonSite    hospedagem no Amplify, com o disjuntor de custo
+              PijamoonSite    hospedagem no CloudFront, com o disjuntor de custo
               PijamoonCustos  alerta de custo no AWS Budgets
               PijamoonCiCd    role do GitHub Actions via OIDC
 docs/       diagrama de arquitetura (draw.io e PNG)
@@ -379,7 +395,7 @@ A partir daí, cada merge na `main` roda os testes e implanta `PijamoonStack`, `
 
 | Situação | O que fazer |
 | --- | --- |
-| O disjuntor tirou o site do ar | Entender a causa e religar: `aws amplify update-branch --app-id <IdAppAmplify> --branch-name main --no-enable-basic-auth --profile desafio` |
+| O disjuntor tirou o site do ar | Entender a causa e religar: `aws lambda invoke --function-name <NomeFuncaoDisjuntor> --cli-binary-format raw-in-base64-out --payload '{"acao":"religar"}' resposta.json --profile desafio` |
 | Mensagens na DLQ | Ver o motivo no log da Lambda de pedidos, corrigir e devolver para a fila: `aws sqs start-message-move-task --source-arn <ARN da DLQ> --destination-arn <ARN da fila> --profile desafio` |
 | Alerta de custo | Cost Explorer filtrado pela tag `projeto = pijamoon` para achar o serviço. Se preciso, remover a loja (abaixo): o alerta continua ativo |
 | Implantar sem merge | Aba *Actions → Deploy → Run workflow* |
