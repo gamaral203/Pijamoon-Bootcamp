@@ -60,8 +60,11 @@ async function reservarVagaDoDia() {
       new UpdateCommand({
         TableName: process.env.TABELA_MENSAGENS,
         Key: { PK: `CONTADOR#${dia}`, SK: "BEDROCK" },
-        UpdateExpression: "ADD total :um SET expiraEm = :expira",
-        ConditionExpression: "attribute_not_exists(total) OR total < :limite",
+        // "total" é palavra reservada do DynamoDB: nas expressões, ele entra
+        // pelo apelido "#total" (ExpressionAttributeNames).
+        UpdateExpression: "ADD #total :um SET expiraEm = :expira",
+        ConditionExpression: "attribute_not_exists(#total) OR #total < :limite",
+        ExpressionAttributeNames: { "#total": "total" },
         ExpressionAttributeValues: {
           ":um": 1,
           ":limite": LIMITE_DIARIO,
