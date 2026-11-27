@@ -1,0 +1,49 @@
+# CI: roda em todo pull request para a main.
+#
+# Confere se o código está saudável ANTES do merge: compila o site, roda os
+# testes e gera os templates do CloudFormation (cdk synth). Não acessa a AWS:
+# nenhuma credencial, nenhum deploy. Um PR com teste quebrado fica com ❌.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: Testes e synth
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Instalar o Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            site/package-lock.json
+            infra/package-lock.json
+
+      - name: Compilar o site (TypeScript → site/js/)
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Rodar os testes da infra e das Lambdas
+        working-directory: infra
+        run: |
+          npm ci
+          npm test
+
+      # Gera os templates de todas as stacks, sem falar com a AWS. Pega erros
+      # que os testes não pegam (ex.: uma propriedade inválida num construct).
+      # O e-mail aqui é fictício: só serve para a stack de custos ser gerada.
+      - name: Gerar os templates (cdk synth)
+        working-directory: infra
+        run: npx cdk synth --quiet -c emailAlertas=ci@exemplo.com

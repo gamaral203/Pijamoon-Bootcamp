@@ -259,11 +259,14 @@ O login é um formulário do próprio site que fala direto com o Cognito: a senh
 
 ### Etapa 8 · Conta do desafio e CI/CD
 
-**Conceitos:** GitHub Actions · OIDC, sem credenciais salvas no GitHub
+**Conceitos:** CI x CD · GitHub Actions · OIDC, sem credenciais salvas no GitHub · trust policy · menor privilégio
 
 - [x] Fazer o bootstrap e o primeiro deploy na conta AWS do desafio
-- [ ] Criar a role de deploy acessada via OIDC
-- [ ] Rodar o build e o `cdk deploy` a cada push na `main`
+- [x] Criar a role de deploy acessada via OIDC (stack `PijamoonCiCd`)
+- [ ] Rodar os testes e o `cdk synth` em todo pull request (workflow `ci.yaml`)
+- [ ] Rodar os testes, o build e o `cdk deploy` a cada merge na `main` (workflow `deploy.yaml`)
+
+A role `pijamoon-github-deploy` só pode ser assumida pelo workflow da branch `main` deste repositório (`StringEquals` no `sub` do token, sem curingas) e não tem permissão de administrador: ela só assume as roles criadas pelo `cdk bootstrap`, com credenciais de no máximo 1 hora. O e-mail dos alertas fica num segredo do repositório, para não aparecer nos logs. A stack `PijamoonCiCd` fica fora do deploy automático: é ela que dá ao GitHub o direito de implantar, então só muda à mão.
 
 ### Etapa 9 · Testes de falha e entrega
 
