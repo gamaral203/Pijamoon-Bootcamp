@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meus pedidos — Pijamoon</title>
+  <meta name="description" content="Os seus pedidos na Pijamoon.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d=%27M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z%27 fill=%27%23FFE29A%27 stroke=%27%23E9B949%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <script>
+    (function () {
+      if (localStorage.getItem("pijamoon_tema") === "escuro") {
+        document.documentElement.dataset.tema = "escuro";
+      }
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- mesmo cabeçalho das outras páginas internas; o ícone de carrinho tem
+       a classe extra "ativo" pra indicar visualmente "você está aqui" -->
+  <header class="site-header">
+    <div class="site-header-top">
+      <a href="../index.html" class="logo" aria-label="Pijamoon — página inicial">
+        <svg class="logo-svg" viewBox="0 0 236 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <!-- lua com rostinho dormindo + brilho: a marca da identidade visual -->
+          <path d="M42 28 A19 19 0 1 1 22 8 A15 15 0 0 0 42 28 Z" fill="#FFE29A" stroke="#E9B949" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="9.5" cy="33.5" r="1.7" fill="#F7B2A6" opacity="0.7"/>
+          <circle cx="23.5" cy="33.5" r="1.7" fill="#F7B2A6" opacity="0.7"/>
+          <path d="M10 29 q2 1.8 4 0 M18 29 q2 1.8 4 0 M14 34.5 q2 2 4 0" fill="none" stroke="#7A5A2E" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M48 4 L49.4 9.6 L55 11 L49.4 12.4 L48 18 L46.6 12.4 L41 11 L46.6 9.6 Z" fill="#F4C55B"/>
+          <circle cx="52" cy="40" r="1.5" fill="#F4C55B"/>
+          <text x="62" y="38" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="29" fill="#0D2B5B">Pijamoon</text>
+        </svg>
+      </a>
+      <div class="header-centro"></div>
+
+      <div class="header-direita">
+        <button type="button" class="icone-header" id="botaoTema" title="Modo escuro" aria-label="Modo escuro">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
+          </svg>
+        </button>
+        <button type="button" class="icone-header" id="botaoConta" title="Entrar" aria-label="Entrar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
+        <span class="conta-nome" id="contaNome" hidden></span>
+        <a href="../carrinho/index.html" class="icone-header" aria-label="Carrinho">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+            <path d="M3 6h18"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span class="badge-carrinho" id="badgeCarrinho" hidden>0</span>
+        </a>
+        <nav>
+          <a href="../index.html">Voltar pra loja</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="carrinho-pagina pedidos-pagina">
+    <h1 class="pagina-titulo">Meus pedidos</h1>
+    <!--
+      Lista vinda de GET /api/orders (ver ts/pedidos.ts). A rota exige o token
+      do Cognito, e o cliente é o "sub" do token: cada pessoa só enxerga os
+      próprios pedidos, não existe parâmetro para pedir os de outra.
+    -->
+    <p class="carregando" id="pedidosCarregando">Carregando os seus pedidos…</p>
+    <p class="erro" id="pedidosErro" hidden></p>
+    <div class="carrinho-vazio" id="pedidosVazio" hidden>
+      <p>Você ainda não fez nenhum pedido.</p>
+      <a href="../index.html" class="hero-cta">Ver os pijamas</a>
+    </div>
+    <ul class="pedidos-lista" id="pedidosLista" hidden></ul>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
+  </footer>
+
+  <!-- config.js é gerado pelo CDK no deploy (região e app client do Cognito) -->
+  <script src="../js/config.js" defer></script>
+  <script src="../js/shared.js" defer></script>
+  <script src="../js/auth.js" defer></script>
+  <script src="../js/pedidos.js" defer></script>
+</body>
+</html>

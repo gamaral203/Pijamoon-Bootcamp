@@ -40,6 +40,8 @@ export interface SiteStackProps extends cdk.StackProps {
   readonly api: apigwv2.IHttpApi;
   /** Opcional: também avisa este e-mail quando o disjuntor desarmar. */
   readonly emailAlertas?: string;
+  /** O id do app client do Cognito, que vai para o js/config.js do site. */
+  readonly idClienteCognito: string;
 }
 
 /**
@@ -149,8 +151,16 @@ export class SiteStack extends cdk.Stack {
     if (!fs.existsSync(path.join(pastaSite, 'js', 'shared.js'))) {
       throw new Error('site/js/ não existe: rode "npm run build" dentro de site/ antes do deploy.');
     }
+    // js/config.js: as configurações que mudam a cada conta e a cada deploy
+    // (região e app client do Cognito). O CDK gera o arquivo na publicação,
+    // já com os valores reais, em vez de deixá-los fixos no código do site.
+    // Nada aqui é segredo: o app client de um site é público por natureza.
+    const conteudoConfig = `window.PIJAMOON_CONFIG = ${JSON.stringify({ regiao: this.region, idClienteCognito: props.idClienteCognito })};\n`;
     const copiaSite = new s3deploy.BucketDeployment(this, 'CopiaSite', {
-      sources: [s3deploy.Source.asset(pastaSite, { exclude: FORA_DO_SITE })],
+      sources: [
+        s3deploy.Source.asset(pastaSite, { exclude: FORA_DO_SITE }),
+        s3deploy.Source.data('js/config.js', conteudoConfig),
+      ],
       destinationBucket: bucketSite,
       destinationKeyPrefix: PREFIXO,
       memoryLimit: 512,
@@ -168,7 +178,8 @@ export class SiteStack extends cdk.Stack {
         sourceUrl: `s3://${bucketSite.bucketName}/${PREFIXO}/`,
         sourceUrlType: 'BUCKET_PREFIX',
       },
-      physicalResourceId: cr.PhysicalResourceId.of(`site-${hashDaPasta(pastaSite)}`),
+      // O id do app client entra junto: se ele mudar, o site é republicado.
+      physicalResourceId: cr.PhysicalResourceId.of(`site-${hashDaPasta(pastaSite)}-${props.idClienteCognito}`),
     };
     const publicacao = new cr.AwsCustomResource(this, 'PublicacaoSite', {
       onCreate: publicar,

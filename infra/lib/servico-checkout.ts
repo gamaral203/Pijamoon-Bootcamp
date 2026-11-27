@@ -12,6 +12,8 @@ export interface ServicoCheckoutProps {
   readonly barramento: events.IEventBus;
   /** O catálogo, só para ler nomes e preços (o checkout nunca escreve nele). */
   readonly tabelaProdutos: dynamodb.ITableV2;
+  /** A catraca do Cognito: sem token válido, a rota responde 401. */
+  readonly authorizer: apigwv2.IHttpRouteAuthorizer;
 }
 
 /**
@@ -45,6 +47,7 @@ export class ServicoCheckout extends Construct {
       path: '/api/checkout',
       methods: [apigwv2.HttpMethod.POST],
       integration: new HttpLambdaIntegration('IntegracaoCheckout', this.funcao),
+      authorizer: props.authorizer, // só cliente logado finaliza compra
     });
   }
 }

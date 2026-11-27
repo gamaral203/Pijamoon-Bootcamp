@@ -58,10 +58,14 @@ function capitalizar(texto: string): string {
 /* ============================================================
  * Usuário e carrinho
  * ============================================================
- * Login e carrinho são só simulados no navegador (localStorage) — este é um
- * site estático, sem servidor nem banco de dados de verdade. Numa loja real,
- * isso seria um serviço de autenticação (Cognito/Auth0/Firebase) e um
- * carrinho persistido no backend, não no localStorage do visitante.
+ * Login com Amazon Cognito: a "sessão" guardada no navegador são os tokens
+ * que o Cognito entregou no login (ver ts/auth.ts, que conversa com ele).
+ * O nome e o e-mail do usuário são lidos de dentro do ID token, que é um
+ * JWT: um JSON assinado, que qualquer um consegue LER, mas ninguém consegue
+ * ALTERAR sem invalidar a assinatura (quem confere é o API Gateway).
+ *
+ * O carrinho continua no localStorage do visitante (carrinho no back-end é
+ * um extra do roadmap).
  * ============================================================ */
 
 interface Usuario {
@@ -76,31 +80,71 @@ interface ItemCarrinho {
   quantidade: number;
 }
 
+/** Os tokens que o Cognito entrega no login. */
+interface Sessao {
+  /** JWT com quem é o usuário (sub, email, name); vence em 1 hora. */
+  idToken: string;
+  /** Serve para pedir um ID token novo sem a senha; vence em 30 dias. */
+  refreshToken: string;
+}
+
 /** Chaves usadas no localStorage do navegador — nomes prefixados "pijamoon_"
  *  pra não colidir com nada de outro site guardado no mesmo navegador. */
-const CHAVE_USUARIO = "pijamoon_usuario";
+const CHAVE_SESSAO = "pijamoon_sessao";
 const CHAVE_CARRINHO = "pijamoon_carrinho";
+/** Chave do login simulado antigo: só é apagada, para não sobrar lixo. */
+const CHAVE_USUARIO_ANTIGA = "pijamoon_usuario";
 
-/** Lê o usuário logado do localStorage, ou null se ninguém estiver logado. */
-function obterUsuario(): Usuario | null {
-  const bruto = localStorage.getItem(CHAVE_USUARIO);
+/**
+ * Lê o conteúdo (as "claims") de um JWT. O token tem três partes separadas
+ * por ponto (cabeçalho.conteúdo.assinatura), e o conteúdo é um JSON em
+ * Base64URL. Isto só LÊ o token: quem confere a assinatura é o API Gateway.
+ */
+function lerClaimsDoToken(token: string): Record<string, unknown> | null {
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)); // TextDecoder: acentos do nome em UTF-8
+  } catch {
+    return null;
+  }
+}
+
+/** Lê a sessão salva, ou null se ninguém estiver logado. */
+function obterSessao(): Sessao | null {
+  const bruto = localStorage.getItem(CHAVE_SESSAO);
   if (!bruto) return null;
   try {
-    return JSON.parse(bruto) as Usuario;
+    const sessao = JSON.parse(bruto) as Sessao;
+    return sessao.idToken && sessao.refreshToken ? sessao : null;
   } catch {
     // localStorage corrompido/editado à mão — trata como "não logado" em vez de quebrar a página
     return null;
   }
 }
 
-/** Salva {nome, email} no localStorage — chamado pelo formulário de login. */
-function salvarUsuario(usuario: Usuario): void {
-  localStorage.setItem(CHAVE_USUARIO, JSON.stringify(usuario));
+/** Salva os tokens do Cognito — chamado depois do login (ts/auth.ts). */
+function salvarSessao(sessao: Sessao): void {
+  localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
+  localStorage.removeItem(CHAVE_USUARIO_ANTIGA);
 }
 
-/** Apaga o usuário salvo — "logout". */
+/**
+ * O usuário logado, lido do ID token, ou null. Mesmo com o ID token vencido,
+ * a pessoa continua logada enquanto houver refresh token: o token novo é
+ * pedido na hora de chamar a API (ver obterTokenValido em ts/auth.ts).
+ */
+function obterUsuario(): Usuario | null {
+  const sessao = obterSessao();
+  const claims = sessao && lerClaimsDoToken(sessao.idToken);
+  if (!claims || typeof claims.email !== "string") return null;
+  return { nome: typeof claims.name === "string" ? claims.name : claims.email, email: claims.email };
+}
+
+/** "Logout": apaga os tokens do navegador. */
 function sairUsuario(): void {
-  localStorage.removeItem(CHAVE_USUARIO);
+  localStorage.removeItem(CHAVE_SESSAO);
+  localStorage.removeItem(CHAVE_USUARIO_ANTIGA);
 }
 
 /** Lê a lista de itens do carrinho, ou array vazio se não tiver nada salvo. */
@@ -178,6 +222,7 @@ function atualizarHeaderConta(raiz: string = ""): void {
         contaNome.textContent = primeiroNome;
         contaNome.hidden = false;
       }
+      mostrarLinkPedidos(raiz, true);
     } else {
       // deslogado: botão volta a ser "entrar" e leva pra tela de login
       botaoConta.title = "Entrar";
@@ -191,6 +236,7 @@ function atualizarHeaderConta(raiz: string = ""): void {
         contaNome.textContent = "";
         contaNome.hidden = true;
       }
+      mostrarLinkPedidos(raiz, false);
     }
   }
 
@@ -202,6 +248,34 @@ function atualizarHeaderConta(raiz: string = ""): void {
   }
 
   atualizarBotaoTema();
+}
+
+/**
+ * Mostra (ou esconde) o ícone "Meus pedidos" no cabeçalho, ao lado do nome.
+ * Ele é criado por código, e não escrito em cada HTML, porque só existe
+ * para quem está logado.
+ */
+function mostrarLinkPedidos(raiz: string, visivel: boolean): void {
+  let link = document.getElementById("linkPedidos") as HTMLAnchorElement | null;
+  if (!visivel) {
+    link?.remove();
+    return;
+  }
+  if (link) return;
+
+  const contaNome = document.getElementById("contaNome");
+  if (!contaNome) return;
+  link = document.createElement("a");
+  link.id = "linkPedidos";
+  link.className = "icone-header";
+  link.href = `${raiz}pedidos/index.html`;
+  link.title = "Meus pedidos";
+  link.setAttribute("aria-label", "Meus pedidos");
+  // ícone de "recibo": uma folha com linhas
+  link.innerHTML =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>';
+  if (window.location.pathname.includes("/pedidos/")) link.classList.add("ativo");
+  contaNome.after(link);
 }
 
 /* ============================================================

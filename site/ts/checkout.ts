@@ -7,6 +7,9 @@
  * assíncrona (evento → fila → Lambda), então a página fica consultando
  * GET /api/orders/{número} até o pedido aparecer como confirmado.
  *
+ * Quem é o cliente vai no token do Cognito (cabeçalho Authorization), e não
+ * no corpo: o API Gateway confere o token antes de chamar a Lambda.
+ *
  * O pagamento continua simulado: o site envia só o MÉTODO escolhido
  * ("cartao" ou "pix"). Número, validade e CVV do cartão nunca saem do
  * navegador, nem para a nossa própria API.
@@ -117,13 +120,11 @@
 
   /**
    * Monta o corpo do pedido com o que a API espera: itens do carrinho,
-   * cliente logado, endereço e o método de pagamento. O preço NÃO vai: quem
-   * calcula o total é a API, com os preços do catálogo.
+   * endereço e o método de pagamento. O preço NÃO vai (quem calcula o total
+   * é a API, com o catálogo) e o cliente também não (vem do token).
    */
   function montarPedido() {
-    const usuario = obterUsuario();
     return {
-      cliente: { nome: usuario?.nome ?? "", email: usuario?.email ?? "" },
       itens: obterCarrinho().map(({ produtoId, tamanho, quantidade }) => ({ produtoId, tamanho, quantidade })),
       entrega: {
         cep: valorDe("campoCep"),
@@ -168,6 +169,11 @@
 
   const esperar = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms));
 
+  /** Sessão acabou (token vencido e sem renovação): volta para o login e depois para cá. */
+  function irParaLogin(): void {
+    window.location.href = `${RAIZ}login/index.html?next=checkout/index.html`;
+  }
+
   /**
    * A parte assíncrona, vista pelo cliente: o pedido foi aceito (202), mas
    * só existe depois que o serviço de pedidos processar o evento. A página
@@ -178,7 +184,11 @@
     for (let tentativa = 1; tentativa <= 20; tentativa++) {
       await esperar(1500);
       try {
-        const resposta = await fetch(`/api/orders/${encodeURIComponent(pedidoId)}`);
+        const token = await obterTokenValido();
+        if (!token) break;
+        const resposta = await fetch(`/api/orders/${encodeURIComponent(pedidoId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (resposta.ok) {
           const pedido = await resposta.json();
           if (pedido.status === "CONFIRMADO") {
@@ -217,9 +227,13 @@
     checkoutErro.hidden = true;
     enviando(true);
     try {
+      // o "crachá": um ID token válido (renovado na hora, se tiver vencido)
+      const token = await obterTokenValido();
+      if (!token) return irParaLogin();
+
       const resposta = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(montarPedido()),
       });
       const corpo = await resposta.json().catch(() => ({}));
@@ -227,6 +241,10 @@
       if (resposta.status === 202) {
         mostrarPedidoRecebido(corpo as PedidoRecebido);
         return;
+      }
+      if (resposta.status === 401) {
+        sairUsuario();
+        return irParaLogin();
       }
       if (resposta.status === 400) {
         mostrarErro("Não deu para registrar o pedido. Confira:", corpo.detalhes ?? []);

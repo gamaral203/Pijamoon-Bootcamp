@@ -19,8 +19,8 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 O desenho mostra a arquitetura completa planejada. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
-- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, alerta de custo no AWS Budgets e as stacks CDK.
-- **Próximas etapas:** Cognito e CI/CD.
+- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, login com Amazon Cognito, alerta de custo no AWS Budgets e as stacks CDK.
+- **Próximas etapas:** CI/CD.
 - **Extra:** mensagem personalizada com Amazon Bedrock.
 
 Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
@@ -241,11 +241,21 @@ No site, o pedido sai sem preço (quem calcula é a API) e sem dados do cartão 
 
 **Conceitos:** autenticação x autorização · User Pool · JWT · JWT authorizer no API Gateway
 
-- [ ] Criar o User Pool na stack
-- [ ] Trocar o login simulado do site pelo Cognito
-- [ ] Proteger o checkout e a consulta de pedidos com o JWT authorizer
-- [ ] Identificar o cliente pelo token, e não por um dado enviado pelo site
-- [ ] Expor `GET /api/orders` com os pedidos do cliente logado e mostrar a lista no site
+- [x] Criar o User Pool na stack
+- [x] Trocar o login simulado do site pelo Cognito
+- [x] Proteger o checkout e a consulta de pedidos com o JWT authorizer
+- [x] Identificar o cliente pelo token, e não por um dado enviado pelo site
+- [x] Expor `GET /api/orders` com os pedidos do cliente logado e mostrar a lista no site
+
+O login é um formulário do próprio site que fala direto com o Cognito: a senha vai do navegador para o Cognito, por HTTPS, e nunca passa pela API da loja. O site manda o ID token no cabeçalho `Authorization`, e o API Gateway confere a assinatura, o emissor, o app client e a validade antes de chamar a Lambda. O catálogo continua aberto.
+
+**Testado na conta do desafio, pela URL pública, com dois usuários de teste:**
+
+- Sem token ou com token falso: `401` no checkout e nas consultas de pedidos. O catálogo responde `200`.
+- Senha errada: "E-mail ou senha incorretos.", sem revelar se o e-mail tem conta.
+- Login, compra e "Meus pedidos": o pedido aparece confirmado na lista do cliente.
+- Isolamento: o segundo usuário recebe `404` ao pedir o pedido do primeiro, e a lista dele vem vazia.
+- O índice novo da tabela de pedidos levou cerca de 3 minutos para ficar pronto depois do deploy. Durante esse tempo, a lista respondia erro.
 
 ### Etapa 8 · Conta do desafio e CI/CD
 

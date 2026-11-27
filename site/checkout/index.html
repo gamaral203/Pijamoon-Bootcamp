@@ -243,7 +243,10 @@
       <p class="pedido-total">Total: <strong id="sucessoTotal"></strong></p>
       <p class="pedido-status pedido-status-processando" id="sucessoStatus" aria-live="polite">Processando o pedido…</p>
       <p class="carrinho-sucesso-nota">Pagamento simulado para este desafio: nenhuma cobrança real foi feita.</p>
-      <a href="../index.html" class="hero-cta">Voltar pra loja</a>
+      <div class="pedido-acoes">
+        <a href="../pedidos/index.html" class="hero-cta">Ver meus pedidos</a>
+        <a href="../index.html" class="login-link">Voltar pra loja</a>
+      </div>
     </div>
   </main>
 
@@ -251,7 +254,10 @@
     <p>&copy; 2026 Pijamoon — Desafio Bootcamp AI/R</p>
   </footer>
 
+  <!-- config.js é gerado pelo CDK no deploy (região e app client do Cognito) -->
+  <script src="../js/config.js" defer></script>
   <script src="../js/shared.js" defer></script>
+  <script src="../js/auth.js" defer></script>
   <script src="../js/checkout.js" defer></script>
 </body>
 </html>

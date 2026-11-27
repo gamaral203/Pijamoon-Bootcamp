@@ -32,6 +32,8 @@ export async function gravarPedido(pedido) {
         Item: {
           PK: `PEDIDO#${pedido.pedidoId}`,
           SK: "META",
+          // Índice por cliente: lista "meus pedidos" do mais novo para o mais antigo.
+          ...(pedido.cliente?.id && { GSI1PK: `CLIENTE#${pedido.cliente.id}`, GSI1SK: pedido.criadoEm }),
           ...pedido,
           status: "CONFIRMADO",
           processadoEm: new Date().toISOString(),
