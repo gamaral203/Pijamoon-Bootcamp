@@ -1,5 +1,7 @@
 *.js
 !jest.config.js
+# CloudFront Functions são JavaScript escrito à mão (não saem do tsc)
+!funcoes/*.js
 *.d.ts
 node_modules
 
