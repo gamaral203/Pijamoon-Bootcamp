@@ -1341,6 +1341,30 @@ body {
   .pedido-status-processando::before { animation: none; }
 }
 
+/* recado do pedido, escrito pelo Amazon Bedrock */
+.pedido-mensagem {
+  max-width: 460px;
+  margin: 0 auto 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border-left: 4px solid var(--amarelo-lua-forte);
+  border-radius: 8px;
+  background: var(--cor-hover-sutil);
+  color: var(--cor-texto-forte);
+  font-style: italic;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.pedido-mensagem::before {
+  content: "💬 Recado da Pijamoon";
+  display: block;
+  margin-bottom: 0.35rem;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
 .pedido-acoes {
   display: flex;
   flex-direction: column;

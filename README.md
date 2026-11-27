@@ -17,11 +17,11 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 ![Diagrama de arquitetura da Pijamoon na AWS](docs/arquitetura.png)
 
-O desenho mostra a arquitetura no ar, conferida na Etapa 9. Só o bloco cinza (mensagem com IA) é um extra planejado. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
+O desenho mostra a arquitetura no ar, conferida na Etapa 9 e atualizada a cada extra. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
 - **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, login com Amazon Cognito, alerta de custo no AWS Budgets e as stacks CDK.
 - **Próximas etapas:** CI/CD.
-- **Extra:** mensagem personalizada com Amazon Bedrock.
+- **Extras no ar:** alarmes do CloudWatch e mensagem personalizada no pedido com Amazon Bedrock (segundo consumidor do evento de pedido).
 
 Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
 
@@ -35,7 +35,7 @@ A regra para decidir é uma pergunta: **o cliente precisa da resposta agora para
 | Fazer login | Síncrono | Sem a resposta, ele não entra |
 | Finalizar a compra | Síncrono só na recepção | O checkout valida o pedido e responde na hora com `202 Accepted` e o número do pedido |
 | Criar o pedido | Assíncrono | Acontece logo depois, via evento e fila. Se falhar, a fila tenta de novo, e depois de várias falhas a mensagem vai para a DLQ, sem o cliente esperar |
-| Mensagem com IA (extra) | Assíncrono | Ninguém precisa esperar por ela. É um segundo consumidor do mesmo evento |
+| Mensagem com IA (extra) | Assíncrono | Ninguém precisa esperar por ela. É um segundo consumidor do mesmo evento: uma segunda regra do EventBridge leva uma cópia para a fila do serviço de mensagens, que chama o Bedrock. O checkout não mudou nada para isso existir |
 | Consultar os pedidos | Síncrono | O cliente abriu a página e quer ver |
 
 O checkout é as duas coisas ao mesmo tempo: a resposta ao cliente é síncrona (`202 Accepted`: "recebi, vou processar") e a criação do pedido é assíncrona. Como a fila entrega cada mensagem **pelo menos uma vez**, o serviço de pedidos grava de forma idempotente: a mesma mensagem processada duas vezes não gera dois pedidos.
@@ -110,6 +110,8 @@ Quase todo o custo é a entrega das imagens do site. O back-end inteiro custa me
 | **2 por segundo (o escolhido)** | 5,2 milhões | US$ 5,18 | US$ 1,21 | US$ 1,04 | **US$ 7,43** |
 
 O limite começou em 5 por segundo e baixou para 2 depois desta conta: US$ 18,58 ficava perto demais do teto, ainda mais com um throttling aproximado. Com 2 por segundo, mesmo um ataque contínuo fica abaixo da metade do limite, e o alerta de 25% (US$ 5) avisa bem antes.
+
+**Bedrock com teto.** Cada mensagem custa cerca de US$ 0,00003 (Amazon Nova Micro: US$ 0,035 por milhão de tokens de entrada e US$ 0,14 por milhão de saída). Mas alguém criando pedidos sem parar chegaria a uns US$ 150 no mês. Por isso há um limite de **200 mensagens por dia**, com um contador atômico no DynamoDB. Passou disso, vai uma mensagem padrão sem chamar o modelo, e o pior caso fica em cerca de US$ 0,20 por mês.
 
 O que não entra na arquitetura por custo fixo: ElastiCache, NAT Gateway, o firewall do Amplify (AWS WAF, US$ 15 por mês) e um dashboard do CloudWatch (US$ 3 por mês). Os alarmes custam US$ 0,10 por mês cada, então são poucos e escolhidos.
 
@@ -292,7 +294,9 @@ aws sqs start-message-move-task --source-arn <ARN da DLQ> --destination-arn <ARN
 - [ ] Carrinho no back-end, com serviço e tabela próprios
 - [x] Alarmes no CloudWatch para erros, mensagens na DLQ e fila parada
 - [ ] Ambientes separados de dev e prod
-- [ ] Mensagem personalizada no pedido com Amazon Bedrock, como um segundo consumidor do evento de pedido
+- [x] Mensagem personalizada no pedido com Amazon Bedrock, como um segundo consumidor do evento de pedido
+
+O serviço de mensagens tem fila, DLQ, Lambdas e tabela próprias. A mensagem é gerada pelo Amazon Nova Micro, o modelo mais barato disponível na conta, com no máximo 200 mensagens por dia. O mesmo evento repetido não chama o Bedrock de novo, e se o modelo falhar vai uma mensagem padrão: o recado é um enfeite e não pode quebrar o pedido. Contra injeção de prompt, o nome do cliente entra limpo e curto, num bloco marcado como dados, e o site mostra a resposta como texto puro. O recado aparece na tela de pedido recebido, pela rota `GET /api/orders/{id}/mensagem`, que exige login e só responde ao dono do pedido.
 
 ## Estrutura
 

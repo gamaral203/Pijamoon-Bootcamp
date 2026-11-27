@@ -86,11 +86,36 @@ test('a consulta de pedidos só lê', () => {
   expect(acoes.some((acao) => /PutItem|UpdateItem|DeleteItem|BatchWrite/.test(acao))).toBe(false);
 });
 
-test('a tabela de pedidos é on-demand e apagada no cdk destroy', () => {
+test('cada serviço tem a sua tabela, on-demand e apagada no cdk destroy', () => {
   const tabelas = Object.values(template.findResources('AWS::DynamoDB::GlobalTable'));
-  expect(tabelas).toHaveLength(2); // produtos e pedidos, uma por serviço
+  expect(tabelas).toHaveLength(3); // produtos, pedidos e mensagens: uma por serviço
   for (const tabela of tabelas) {
     expect(tabela.DeletionPolicy).toBe('Delete');
     expect(tabela.Properties.BillingMode).toBe('PAY_PER_REQUEST');
   }
+});
+
+test('o PedidoRecebido tem dois consumidores: a fila de pedidos e a de mensagens (fan-out)', () => {
+  const regras = Object.values(template.findResources('AWS::Events::Rule'));
+  expect(regras).toHaveLength(2);
+  const alvos = regras.map((r: any) => JSON.stringify(r.Properties.Targets[0].Arn));
+  expect(alvos.some((a: string) => a.includes('FilaPedidos'))).toBe(true);
+  expect(alvos.some((a: string) => a.includes('FilaMensagens'))).toBe(true);
+});
+
+test('a Lambda de mensagens só pode invocar o modelo Nova Micro', () => {
+  const policies = template.findResources('AWS::IAM::Policy', {
+    Properties: { PolicyName: Match.stringLikeRegexp('FuncaoGeraMensagem') },
+  });
+  const declaracao = Object.values(policies)
+    .flatMap((p: any) => p.Properties.PolicyDocument.Statement)
+    .find((d: any) => d.Action === 'bedrock:InvokeModel');
+  expect(JSON.stringify(declaracao.Resource)).toContain('foundation-model/amazon.nova-micro-v1:0');
+});
+
+test('a mensagem do pedido exige login', () => {
+  template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+    RouteKey: 'GET /api/orders/{pedidoId}/mensagem',
+    AuthorizationType: 'JWT',
+  });
 });
