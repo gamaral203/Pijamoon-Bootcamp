@@ -11,6 +11,7 @@ import { PijamoonStack } from '../lib/pijamoon-stack';
 import { SiteStack } from '../lib/site-stack';
 import { CustosStack } from '../lib/custos-stack';
 import { aplicarTagsDeCusto } from '../lib/regras';
+import { CiCdStack } from '../lib/cicd-stack';
 
 const app = new cdk.App();
 
@@ -54,3 +55,10 @@ if (emailAlertas) {
     description: 'Pijamoon: alerta de custo no AWS Budgets (teto de US$ 20/mês)',
   });
 }
+
+// Deploy pelo GitHub Actions (OIDC). Implantada uma vez, à mão: é ela que dá
+// ao GitHub o direito de implantar as outras stacks.
+new CiCdStack(app, 'PijamoonCiCd', {
+  env,
+  description: 'Pijamoon: role de deploy do GitHub Actions via OIDC',
+});

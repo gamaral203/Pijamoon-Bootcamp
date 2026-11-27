@@ -1,0 +1,90 @@
+# CD: implanta a loja na conta AWS do desafio a cada merge (push) na main.
+#
+# Sem nenhuma chave da AWS guardada no GitHub: o workflow pede um token OIDC
+# ao GitHub, e a AWS troca esse token por credenciais temporárias da role
+# pijamoon-github-deploy (stack PijamoonCiCd). A trust policy da role só aceita
+# tokens desta branch deste repositório.
+#
+# Configuração no GitHub (Settings → Secrets and variables → Actions):
+#   variável AWS_ROLE_DEPLOY → ARN da role (saída ArnRoleDeploy da PijamoonCiCd)
+#   segredo  EMAIL_ALERTAS   → e-mail dos alertas de custo e do disjuntor
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    # Mudança só em documentação não muda nada na AWS: não precisa de deploy.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  # Botão "Run workflow" na aba Actions, para implantar à mão quando precisar.
+  workflow_dispatch:
+
+# Um deploy por vez: se dois merges chegarem juntos, o segundo espera o
+# primeiro terminar (dois cdk deploy ao mesmo tempo na mesma stack falham).
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # permite pedir o token OIDC ao GitHub
+  contents: read
+
+jobs:
+  deploy:
+    name: Testes e cdk deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conferir a configuração do repositório
+        env:
+          ROLE: ${{ vars.AWS_ROLE_DEPLOY }}
+          EMAIL: ${{ secrets.EMAIL_ALERTAS }}
+        run: |
+          if [ -z "$ROLE" ] || [ -z "$EMAIL" ]; then
+            echo "::error::Falta a variável AWS_ROLE_DEPLOY ou o segredo EMAIL_ALERTAS (veja o topo deste arquivo)."
+            exit 1
+          fi
+
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Instalar o Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            site/package-lock.json
+            infra/package-lock.json
+
+      - name: Compilar o site (TypeScript → site/js/)
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+
+      # Os testes rodam de novo aqui: nada vai para a AWS se algum falhar.
+      - name: Rodar os testes
+        working-directory: infra
+        run: |
+          npm ci
+          npm test
+
+      - name: Entrar na AWS via OIDC (credenciais temporárias)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_DEPLOY }}
+          aws-region: us-east-1
+          role-session-name: pijamoon-deploy-${{ github.run_id }}
+
+      # As três stacks da loja. A PijamoonCiCd fica de fora de propósito: é ela
+      # que dá ao GitHub o direito de implantar, então só muda à mão.
+      # --require-approval never: no robô não há ninguém para responder "y".
+      - name: Implantar (cdk deploy)
+        working-directory: infra
+        env:
+          EMAIL_ALERTAS: ${{ secrets.EMAIL_ALERTAS }}
+        run: >
+          npx cdk deploy PijamoonStack PijamoonSite PijamoonCustos
+          --require-approval never
+          -c emailAlertas="$EMAIL_ALERTAS"
