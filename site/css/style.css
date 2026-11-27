@@ -1372,6 +1372,11 @@ body {
   gap: 0.75rem;
 }
 
+/* o .hero-cta nasce com align-self: flex-start (no hero); aqui fica no centro */
+.pedido-acoes .hero-cta {
+  align-self: center;
+}
+
 /* Página "Meus pedidos" (pedidos/index.html): um cartão por pedido */
 
 .pedidos-lista {
