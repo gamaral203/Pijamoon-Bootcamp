@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Como fiz — Pijamoon</title>
-  <meta name="description" content="Bastidores da loja Pijamoon: como foi construída, hospedada e o que ficaria pra próxima versão.">
+  <meta name="description" content="Bastidores da loja Pijamoon: a arquitetura serverless na AWS e como o projeto começou.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d=%27M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z%27 fill=%27%23FFE29A%27 stroke=%27%23E9B949%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,15 +64,37 @@
          sobre a diferença entre as duas classes -->
     <section class="hero">
       <h1>Como eu fiz a Pijamoon</h1>
-      <p>Organização do código, headless commerce, AWS/cache, Lighthouse e onde entraria IA.</p>
+      <p>De uma loja estática no bootcamp a um commerce serverless na AWS, orientado a eventos, com toda a infraestrutura em código (AWS CDK).</p>
     </section>
 
-    <section aria-label="Vídeo explicativo">
-      <!-- Vídeo do desafio, embutido do YouTube -->
+    <!--
+      O diagrama vem direto do repositório (mesma imagem do README): quando a
+      arquitetura mudar e o diagrama for atualizado no GitHub, esta página
+      acompanha sozinha, sem uma cópia para esquecer de atualizar.
+    -->
+    <section class="diagrama-bff" aria-label="Arquitetura atual">
+      <h2>A arquitetura hoje</h2>
+      <ul class="como-fiz-lista">
+        <li><strong>Site:</strong> Amplify Hosting, com CDN e HTTPS. A conta do desafio bloqueia o CloudFront.</li>
+        <li><strong>API:</strong> API Gateway com limite de requisições. O checkout e os pedidos exigem login (Amazon Cognito, token JWT).</li>
+        <li><strong>Catálogo (síncrono):</strong> Lambda + DynamoDB, com cache de 60 s na memória da Lambda.</li>
+        <li><strong>Checkout (assíncrono):</strong> responde na hora com <code>202 Accepted</code> e publica um evento. EventBridge → fila SQS (com DLQ) → Lambda grava o pedido, uma vez só.</li>
+        <li><strong>Custo:</strong> teto de US$ 20 por mês, com alerta no AWS Budgets e um disjuntor que tira o site do ar se o tráfego disparar.</li>
+        <li><strong>Entrega:</strong> tudo em AWS CDK (4 stacks), testado a cada pull request e implantado a cada merge pelo GitHub Actions, sem nenhuma chave da AWS guardada no GitHub (OIDC).</li>
+      </ul>
+      <figure>
+        <img src="https://raw.githubusercontent.com/gamaral203/Pijamoon-Bootcamp/main/docs/arquitetura.png" alt="Diagrama de arquitetura da Pijamoon na AWS: clientes, Amplify, API Gateway com Cognito, serviços de catálogo, checkout e pedidos com EventBridge, SQS e DynamoDB, disjuntor de custo e deploy pelo GitHub Actions." loading="lazy">
+        <figcaption>Os detalhes, as decisões e os custos estão no <a href="https://github.com/gamaral203/Pijamoon-Bootcamp#readme" target="_blank" rel="noopener">README do projeto</a>.</figcaption>
+      </figure>
+    </section>
+
+    <section class="como-fiz-secao" aria-label="Vídeo da primeira fase">
+      <h2>Como começou</h2>
+      <p>O vídeo abaixo é da primeira fase, no bootcamp: a loja estática, com o catálogo no Supabase. O projeto evoluiu no mesmo repositório até a versão serverless de hoje.</p>
       <div class="video-wrapper">
         <iframe
           src="https://www.youtube.com/embed/SXXjsLMRnMA"
-          title="Como eu fiz a Pijamoon"
+          title="Como eu fiz a Pijamoon (fase do bootcamp)"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
         ></iframe>
@@ -85,28 +107,20 @@
     </section>
 
     <!--
-      Bônus do desafio: "desenho da arquitetura apontando onde entraria um
-      BFF se a loja ganhasse um app mobile". Hoje o front (app web) fala
-      direto com o Supabase — sem BFF nenhum. Este diagrama mostra a
-      arquitetura PROPOSTA (não a atual): se existisse também um app
-      mobile, um BFF entraria no meio dos dois clientes pra centralizar
-      regra de negócio (carrinho, checkout, validações) e adaptar a
-      resposta pro formato ideal de cada cliente, em vez de duplicar essa
-      lógica no app web e no app mobile.
+      O bônus do bootcamp perguntava onde entraria um BFF se a loja ganhasse
+      um app mobile. Com a API na AWS, a resposta mudou: a API já é o
+      back-end compartilhado.
     -->
-    <section class="diagrama-bff" aria-label="Diagrama de arquitetura com BFF">
-      <h2>Onde entraria um BFF (bônus)</h2>
+    <section class="como-fiz-secao" aria-label="E um app mobile?">
+      <h2>E se a Pijamoon ganhasse um app mobile?</h2>
       <p>
-        Hoje o app web fala direto com o Supabase. Se a Pijamoon ganhasse
-        um app mobile, um <strong>BFF (Backend for Frontend)</strong> entraria
-        no meio dos dois clientes — centralizando regras de negócio (carrinho,
-        checkout, validações) e adaptando a resposta pro formato ideal de cada
-        um, em vez de duplicar essa lógica no app web e no mobile.
+        Hoje a API já é o back-end compartilhado: um app mobile usaria as mesmas
+        rotas, o mesmo login do Cognito e o mesmo fluxo de pedidos, sem duplicar
+        regra de negócio. Um <strong>BFF (Backend for Frontend)</strong> só
+        entraria se o app precisasse de respostas num formato muito diferente do
+        site, por exemplo, juntando várias chamadas numa só para economizar
+        dados no celular.
       </p>
-      <figure>
-        <img src="../docs/diagrama-bff.png" alt="Diagrama: app web e app mobile (futuro) apontando para um BFF, que aplica regras de negócio e adaptação por cliente antes de consultar o Supabase.">
-        <figcaption>App web e app mobile (futuro) → BFF (regras de negócio + adaptação por cliente) → Supabase.</figcaption>
-      </figure>
     </section>
   </main>
 
