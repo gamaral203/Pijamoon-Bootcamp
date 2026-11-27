@@ -6,7 +6,8 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "deploy": "npm --prefix ../site run build && cdk deploy"
+    "deploy": "npm --prefix ../site run build && cdk deploy PijamoonStack",
+    "deploy:site": "npm --prefix ../site run build && cdk deploy PijamoonSite"
   },
   "devDependencies": {
     "@swc/core": "^1.15.0",
