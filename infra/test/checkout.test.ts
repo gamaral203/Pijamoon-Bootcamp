@@ -60,15 +60,15 @@ describe('validarPedido', () => {
   });
 
   test.each([
-    ['produto inexistente', (c: any) => (c.itens[0].produtoId = 'nao-existe'), /não existe/],
-    ['tamanho que o produto não tem', (c: any) => (c.itens[1].tamanho = 'P'), /tamanho "P"/],
-    ['quantidade zero', (c: any) => (c.itens[0].quantidade = 0), /quantidade/],
+    ['produto inexistente', (c: any) => (c.itens[0].produtoId = 'nao-existe'), /não existe mais na loja/],
+    ['tamanho que o produto não tem', (c: any) => (c.itens[1].tamanho = 'P'), /Pijama Estrelas: o tamanho "P" não está disponível/],
+    ['quantidade zero', (c: any) => (c.itens[0].quantidade = 0), /Camisola Limonada: a quantidade/],
     ['quantidade quebrada', (c: any) => (c.itens[0].quantidade = 1.5), /quantidade/],
     ['quantidade acima do limite', (c: any) => (c.itens[0].quantidade = LIMITES.unidadesPorItem + 1), /quantidade/],
-    ['carrinho vazio', (c: any) => (c.itens = []), /pelo menos um item/],
-    ['e-mail inválido', (c: any) => (c.cliente.email = 'ana@'), /email/],
-    ['endereço sem cidade', (c: any) => delete c.entrega.cidade, /entrega.cidade/],
-    ['pagamento desconhecido', (c: any) => (c.pagamento = 'boleto'), /pagamento/],
+    ['carrinho vazio', (c: any) => (c.itens = []), /carrinho está vazio/],
+    ['e-mail inválido', (c: any) => (c.cliente.email = 'ana@'), /e-mail do cadastro/],
+    ['endereço sem cidade', (c: any) => delete c.entrega.cidade, /campo "Cidade"/],
+    ['pagamento desconhecido', (c: any) => (c.pagamento = 'boleto'), /cartão ou Pix/],
   ])('recusa %s', (_nome, estragar, mensagem) => {
     const corpo = pedidoValido();
     estragar(corpo);
@@ -97,7 +97,7 @@ describe('handler', () => {
     const resposta = await handler({ body: JSON.stringify(corpo) });
 
     expect(resposta.statusCode).toBe(400);
-    expect(JSON.parse(resposta.body).detalhes).toEqual(['pagamento precisa ser "cartao" ou "pix"']);
+    expect(JSON.parse(resposta.body).detalhes).toEqual(['Escolha cartão ou Pix como forma de pagamento.']);
     expect(publicar).not.toHaveBeenCalled();
   });
 

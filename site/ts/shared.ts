@@ -31,7 +31,7 @@ interface Produto {
 
 /**
  * Busca o catálogo inteiro na API da loja (GET /api/products), servida pelo
- * mesmo domínio do site: CloudFront → API Gateway → Lambda → DynamoDB. A API
+ * mesmo domínio do site: Amplify (regra /api/*) → API Gateway → Lambda → DynamoDB. A API
  * já devolve cada item no formato da interface Produto, então nenhum outro
  * arquivo (app.ts, produto.ts, carrinho.ts, checkout.ts) precisou mudar.
  */

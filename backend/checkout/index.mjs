@@ -31,6 +31,9 @@ export const LIMITES = { itensPorPedido: 20, unidadesPorItem: 10 };
 
 const CAMPOS_ENTREGA = ["cep", "rua", "numero", "bairro", "cidade", "estado"];
 
+/** O nome de cada campo do endereço como aparece na tela do checkout. */
+const ROTULOS_ENTREGA = { cep: "CEP", rua: "Endereço", numero: "Número", bairro: "Bairro", cidade: "Cidade", estado: "Estado" };
+
 // O catálogo fica 60 s em memória, como na Lambda do catálogo: o checkout
 // precisa dos preços, mas eles quase nunca mudam.
 let cacheCatalogo = { produtos: null, expiraEm: 0 };
@@ -69,29 +72,29 @@ export function validarPedido(corpo, produtos) {
   const erros = [];
   const { cliente, itens, entrega, pagamento } = corpo ?? {};
 
-  if (!texto(cliente?.nome)) erros.push("cliente.nome é obrigatório");
+  if (!texto(cliente?.nome)) erros.push("Informe o seu nome.");
   if (!texto(cliente?.email) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) {
-    erros.push("cliente.email é inválido");
+    erros.push("O e-mail do cadastro é inválido.");
   }
 
   if (!Array.isArray(itens) || itens.length === 0) {
-    erros.push("itens precisa ter pelo menos um item");
+    erros.push("O carrinho está vazio.");
   } else if (itens.length > LIMITES.itensPorPedido) {
-    erros.push(`itens aceita no máximo ${LIMITES.itensPorPedido} linhas`);
+    erros.push(`O pedido aceita no máximo ${LIMITES.itensPorPedido} itens diferentes.`);
   }
 
   const itensConferidos = [];
   for (const [i, item] of (Array.isArray(itens) ? itens : []).entries()) {
     const produto = produtos.get(item?.produtoId);
     if (!produto) {
-      erros.push(`itens[${i}]: produto "${item?.produtoId}" não existe`);
+      erros.push(`Um produto do carrinho não existe mais na loja ("${item?.produtoId}").`);
       continue;
     }
     if (!produto.tamanhos?.includes(item.tamanho)) {
-      erros.push(`itens[${i}]: tamanho "${item.tamanho}" não existe para ${produto.id}`);
+      erros.push(`${produto.nome}: o tamanho "${item.tamanho}" não está disponível.`);
     }
     if (!Number.isInteger(item.quantidade) || item.quantidade < 1 || item.quantidade > LIMITES.unidadesPorItem) {
-      erros.push(`itens[${i}]: quantidade precisa ser um inteiro de 1 a ${LIMITES.unidadesPorItem}`);
+      erros.push(`${produto.nome}: a quantidade precisa ser de 1 a ${LIMITES.unidadesPorItem} unidades.`);
     }
     itensConferidos.push({
       produtoId: produto.id,
@@ -104,13 +107,13 @@ export function validarPedido(corpo, produtos) {
   }
 
   for (const campo of CAMPOS_ENTREGA) {
-    if (!texto(entrega?.[campo])) erros.push(`entrega.${campo} é obrigatório`);
+    if (!texto(entrega?.[campo])) erros.push(`Preencha o campo "${ROTULOS_ENTREGA[campo]}" do endereço.`);
   }
   if (entrega?.complemento !== undefined && typeof entrega.complemento !== "string") {
-    erros.push("entrega.complemento precisa ser texto");
+    erros.push("O complemento do endereço precisa ser um texto.");
   }
 
-  if (pagamento !== "cartao" && pagamento !== "pix") erros.push('pagamento precisa ser "cartao" ou "pix"');
+  if (pagamento !== "cartao" && pagamento !== "pix") erros.push("Escolha cartão ou Pix como forma de pagamento.");
 
   if (erros.length > 0) return { erros };
 

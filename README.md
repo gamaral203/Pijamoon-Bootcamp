@@ -19,8 +19,8 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 O desenho mostra a arquitetura completa planejada. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
-- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos, alerta de custo no AWS Budgets e as stacks CDK.
-- **Próximas etapas:** checkout integrado ao site, Cognito e CI/CD.
+- **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, alerta de custo no AWS Budgets e as stacks CDK.
+- **Próximas etapas:** Cognito e CI/CD.
 - **Extra:** mensagem personalizada com Amazon Bedrock.
 
 Cada serviço tem a sua própria função e a sua própria tabela: o checkout não grava na tabela de pedidos, ele só avisa que um pedido foi feito.
@@ -231,9 +231,11 @@ A lista "meus pedidos" (`GET /api/orders`) passou para a Etapa 7: sem login, ela
 
 ### Etapa 6 · Front integrado
 
-- [ ] Fazer o checkout do site chamar a API e mostrar o número do pedido
-- [ ] Mostrar o andamento do pedido no site (processando → confirmado)
-- [ ] Testar o fluxo completo pela URL pública
+- [x] Fazer o checkout do site chamar a API e mostrar o número do pedido
+- [x] Mostrar o andamento do pedido no site (processando → confirmado)
+- [x] Testar o fluxo completo pela URL pública
+
+No site, o pedido sai sem preço (quem calcula é a API) e sem dados do cartão (só o método, cartão ou Pix). O carrinho só é esvaziado quando a API aceita o pedido: em caso de erro, a mensagem aparece acima do botão e o cliente não perde o que escolheu. **Testado num navegador pela URL pública:** um pedido com tamanho inexistente mostrou o erro e manteve o carrinho, e um pedido válido mostrou o número e passou a "confirmado" em cerca de 2,5 s.
 
 ### Etapa 7 · Login com Amazon Cognito
 
