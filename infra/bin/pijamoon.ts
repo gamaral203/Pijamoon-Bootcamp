@@ -25,24 +25,26 @@ const env = {
 // Tags de custo em todos os recursos de todas as stacks (ver lib/regras.ts).
 aplicarTagsDeCusto(app);
 
+// O e-mail dos alertas não fica no código (o repositório é público): ele
+// vem no comando, com -c emailAlertas=voce@exemplo.com.
+const emailAlertas: string | undefined = app.node.tryGetContext('emailAlertas');
+
 // Back-end: catálogo (tabela, Lambda e API). Sobe em qualquer conta.
 const backend = new PijamoonStack(app, 'PijamoonStack', {
   env,
   description: 'Pijamoon: back-end serverless orientado a eventos (Desafio 1)',
 });
 
-// Hospedagem do site. Por enquanto é CloudFront + S3, que a conta do desafio
-// bloqueia: lá, esta stack ainda não é implantada.
+// Hospedagem do site com o Amplify (a conta do desafio bloqueia o CloudFront),
+// com o disjuntor que tira o site do ar se o tráfego disparar.
 new SiteStack(app, 'PijamoonSite', {
   env,
   api: backend.api,
-  description: 'Pijamoon: hospedagem do site',
+  emailAlertas,
+  description: 'Pijamoon: hospedagem do site no Amplify, com disjuntor de tráfego',
 });
 
-// Alerta de custo. O e-mail não fica no código (o repositório é público):
-// ele vem no comando, com -c emailAlertas=voce@exemplo.com. Sem o e-mail,
-// a stack simplesmente não é criada.
-const emailAlertas = app.node.tryGetContext('emailAlertas');
+// Alerta de custo. Sem o e-mail, a stack simplesmente não é criada.
 if (emailAlertas) {
   new CustosStack(app, 'PijamoonCustos', {
     env,
