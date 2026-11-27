@@ -43,9 +43,31 @@ O checkout é as duas coisas ao mesmo tempo: a resposta ao cliente é síncrona 
 A conta do projeto tem limite de **US$ 20 por mês**. A arquitetura foi pensada para isso:
 
 - **Só serviços cobrados por uso.** Nada fica ligado cobrando por hora: Lambda, API Gateway, DynamoDB on-demand, EventBridge, SQS, S3 e CloudFront custam centavos com tráfego de demonstração.
-- **Cache sem custo fixo.** O catálogo fica em cache no CloudFront e na memória da Lambda. Um cache dedicado (ElastiCache/Redis) cobraria por hora mesmo parado e exigiria uma VPC com NAT Gateway, o que sozinho passaria do orçamento.
-- **Proteção contra abuso.** Limite de requisições (throttling) na API, para um script não gerar custo chamando as rotas sem parar.
-- **Alerta antes de estourar.** Alertas do AWS Budgets por e-mail ao atingir parte do limite.
+- **Cache sem custo fixo.** O catálogo fica 60 s em cache na memória da Lambda (o DynamoDB nem é consultado) e 60 s no navegador (`Cache-Control`). Um cache dedicado (ElastiCache/Redis) cobraria por hora mesmo parado e exigiria uma VPC com NAT Gateway, o que sozinho passaria do orçamento.
+- **Proteção contra abuso.** A API aceita 5 requisições por segundo em média, com picos de 10. Acima disso, responde `429` sem chamar a Lambda. No pior caso, alguém chamando a API sem parar o mês inteiro, são ~13 milhões de requisições, cerca de US$ 13: abaixo do teto. O limite do API Gateway é aproximado, não exato: num teste com 200 requisições simultâneas, 28 voltaram `429`. Por isso ele trabalha junto com o alerta de custo, e não sozinho.
+- **Alerta antes de estourar.** Um orçamento no AWS Budgets avisa por e-mail antes de chegar ao limite (detalhes abaixo).
+- **Gasto rastreável.** Todos os recursos levam as tags `projeto`, `desafio` e `gerenciado-por`, para filtrar o custo da Pijamoon no Billing.
+
+### Alerta de custo (limite da conta)
+
+> ⚠️ **A conta do desafio não pode passar de US$ 20 por mês.** Por isso, o primeiro recurso criado nela é um alerta de custo, antes de qualquer parte da loja.
+
+A stack `PijamoonCustos` cria o orçamento `pijamoon-limite-mensal` no AWS Budgets, que manda e-mail nestes pontos:
+
+| Quando | Gasto no mês | Tipo de alerta |
+| --- | --- | --- |
+| 25% do limite | US$ 5 | gasto real |
+| 50% do limite | US$ 10 | gasto real |
+| 80% do limite | US$ 16 | gasto real |
+| 100% do limite | US$ 20 | gasto real |
+| Previsão acima de 100% | projeção de mais de US$ 20 | previsão da AWS pelo ritmo do mês |
+
+- O alerta de **previsão** é o mais importante: ele chega quando o ritmo de gasto indica que o mês vai estourar, ainda com tempo de reagir.
+- O alerta está numa **stack separada** de propósito: ele continua vigiando a conta mesmo se a loja for removida com `cdk destroy`.
+- O Budgets **só avisa, não desliga nada**. Quem segura o gasto é o desenho da arquitetura: só serviços cobrados por uso, cache e throttling.
+- O e-mail de destino não fica no código, porque o repositório é público. Ele é informado no deploy: `npx cdk deploy PijamoonCustos -c emailAlertas=<e-mail>`.
+
+Se um alerta chegar, o primeiro passo é ver no Cost Explorer, filtrando pela tag `projeto = pijamoon`, qual serviço está gastando. Se for preciso, a loja sai do ar com `npx cdk destroy PijamoonStack PijamoonSite` e o alerta continua ativo.
 
 A estimativa detalhada entra aqui na Etapa 4.
 
@@ -89,10 +111,10 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 
 **Conceitos:** cobrança por uso · AWS Budgets · tags de custo · throttling · cache na borda
 
-- [ ] Criar alertas do AWS Budgets dentro do limite de US$ 20 por mês
-- [ ] Marcar todos os recursos da stack com tags de custo
-- [ ] Configurar o limite de requisições (throttling) na API
-- [ ] Guardar o catálogo em cache no CloudFront e na memória da Lambda
+- [x] Criar alertas do AWS Budgets dentro do limite de US$ 20 por mês
+- [x] Marcar todos os recursos da stack com tags de custo
+- [x] Configurar o limite de requisições (throttling) na API
+- [x] Guardar o catálogo em cache na memória da Lambda e no navegador
 - [ ] Estimar o custo mensal na AWS Pricing Calculator e documentar aqui
 
 ### Etapa 5 · Checkout orientado a eventos
@@ -125,7 +147,7 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 
 **Conceitos:** GitHub Actions · OIDC, sem credenciais salvas no GitHub
 
-- [ ] Fazer o bootstrap e o primeiro deploy na conta AWS do desafio
+- [x] Fazer o bootstrap e o primeiro deploy na conta AWS do desafio
 - [ ] Criar a role de deploy acessada via OIDC
 - [ ] Rodar o build e o `cdk deploy` a cada push na `main`
 
@@ -148,7 +170,8 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 ```
 site/       front headless: HTML, CSS e TypeScript (compilado com tsc)
 backend/    código das Lambdas
-infra/      stack do AWS CDK em TypeScript
+infra/      AWS CDK em TypeScript: stacks PijamoonStack (back-end),
+            PijamoonSite (hospedagem) e PijamoonCustos (Budgets)
 docs/       diagrama de arquitetura (draw.io e PNG)
 .github/    workflow do GitHub Actions
 ```

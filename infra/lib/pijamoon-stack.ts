@@ -8,20 +8,32 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as cr from 'aws-cdk-lib/custom-resources';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from 'constructs';
+import { apagarLogsNoDestroy } from './regras';
 
 /** Raiz do repositório, para achar backend/ e os dados a partir de infra/lib/. */
 const RAIZ = path.join(__dirname, '..', '..');
 
 /**
- * A stack da Pijamoon: tudo o que ela declara sobe junto num `cdk deploy`
- * e desce junto num `cdk destroy`.
+ * Limite da API: 5 requisições por segundo em média, com picos de até 10.
+ * Para uma loja de demonstração, isso sobra (cada página faz uma chamada).
+ * E mesmo no pior caso, alguém chamando a API sem parar o mês inteiro,
+ * são ~13 milhões de requisições: cerca de US$ 13 de API Gateway, abaixo
+ * do teto de US$ 20 (e o cache da Lambda poupa o DynamoDB).
+ */
+export const LIMITE_API = { porSegundo: 5, pico: 10 };
+
+/**
+ * O back-end da Pijamoon: catálogo (tabela, Lambda e API). Tudo o que esta
+ * stack declara sobe junto num `cdk deploy` e desce junto num `cdk destroy`.
+ *
+ * A hospedagem do site fica em outra stack (PijamoonSite), porque depende
+ * do que a conta permite: o back-end sobe em qualquer conta.
  */
 export class PijamoonStack extends cdk.Stack {
+  /** A API da loja, usada pela stack do site para encaminhar /api/*. */
+  public readonly api: apigwv2.HttpApi;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -119,87 +131,28 @@ export class PijamoonStack extends cdk.Stack {
       integration: new HttpLambdaIntegration('IntegracaoCatalogo', funcaoCatalogo),
     });
 
-    /* ------------------------------------------------------------------
-     * Site: bucket privado → CloudFront → arquivos de site/
-     * ------------------------------------------------------------------ */
+    // Limite de requisições (throttling) para todas as rotas do stage padrão.
+    // A conta tem teto de US$ 20 por mês: o limite é o que impede um script
+    // de gerar uma conta alta chamando a API sem parar. Passando disso, o
+    // API Gateway responde 429 (Too Many Requests) sem nem chamar a Lambda.
+    //   rateLimit: média de requisições por segundo
+    //   burstLimit: pico curto permitido acima da média
+    // O HttpApi cria o stage $default sozinho, então o ajuste é feito
+    // direto no recurso do CloudFormation (L1) que está por baixo dele.
+    const stagePadrao = api.defaultStage!.node.defaultChild as apigwv2.CfnStage;
+    stagePadrao.defaultRouteSettings = {
+      throttlingRateLimit: LIMITE_API.porSegundo,
+      throttlingBurstLimit: LIMITE_API.pico,
+    };
 
-    // Bucket privado: ninguém acessa direto, só o CloudFront (via OAC).
-    const bucketSite = new s3.Bucket(this, 'BucketSite', {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      // Projeto de estudo: no `cdk destroy`, esvazia e apaga o bucket.
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
+    this.api = api;
 
-    // O endereço da API sem o "https://", que é o que o CloudFront espera.
-    const dominioApi = `${api.apiId}.execute-api.${this.region}.${this.urlSuffix}`;
-
-    // Uma entrada só para a loja inteira: o mesmo domínio serve o site e a
-    // API, então o navegador não precisa de CORS (como na Fase 1).
-    const distribuicao = new cloudfront.Distribution(this, 'DistribuicaoSite', {
-      comment: 'Pijamoon: site e API',
-      defaultRootObject: 'index.html',
-      // Comportamento padrão: arquivos do site, vindos do bucket e com cache.
-      defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(bucketSite),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-      },
-      additionalBehaviors: {
-        // /api/*: encaminha para o API Gateway, sem cache (o catálogo e,
-        // depois, os pedidos precisam vir sempre atualizados).
-        '/api/*': {
-          origin: new origins.HttpOrigin(dominioApi, {
-            protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
-          }),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-          // Repassa query string, headers e corpo, menos o Host: o API Gateway
-          // precisa receber o próprio domínio, não o do CloudFront.
-          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL, // o checkout vai usar POST
-        },
-      },
-    });
-
-    // Publica os arquivos de site/ no bucket e limpa o cache do CloudFront.
-    // O site precisa estar compilado (site/js/ é gerado pelo tsc e não vai pro Git).
-    const pastaSite = path.join(RAIZ, 'site');
-    if (!fs.existsSync(path.join(pastaSite, 'js', 'shared.js'))) {
-      throw new Error('site/js/ não existe: rode "npm run build" dentro de site/ antes do deploy.');
-    }
-    new s3deploy.BucketDeployment(this, 'PublicacaoSite', {
-      sources: [
-        s3deploy.Source.asset(pastaSite, {
-          // Só o que o navegador usa: fica de fora o código-fonte e a configuração.
-          exclude: ['ts', 'node_modules', 'dist', 'package.json', 'package-lock.json', 'tsconfig.json', '*.map'],
-        }),
-      ],
-      destinationBucket: bucketSite,
-      distribution: distribuicao,
-      distributionPaths: ['/*'],
-      memoryLimit: 512,
-    });
-
-    // Regra para a stack inteira: todo grupo de logs (inclusive os que o CDK
-    // cria por conta própria, como o da Lambda que grava os produtos) guarda
-    // uma semana e é apagado no `cdk destroy`, em vez de ficar para trás.
-    cdk.Aspects.of(this).add({
-      visit(node) {
-        if (node instanceof logs.CfnLogGroup) {
-          node.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
-          node.retentionInDays = logs.RetentionDays.ONE_WEEK;
-        }
-      },
-    });
+    apagarLogsNoDestroy(this);
 
     /* ------------------------------------------------------------------
      * Saídas: aparecem no terminal no fim do deploy
      * ------------------------------------------------------------------ */
-    new cdk.CfnOutput(this, 'UrlLoja', { value: `https://${distribuicao.distributionDomainName}` });
-    new cdk.CfnOutput(this, 'UrlCatalogo', { value: `https://${distribuicao.distributionDomainName}/api/products` });
+    new cdk.CfnOutput(this, 'UrlCatalogo', { value: `${api.apiEndpoint}/api/products` });
     new cdk.CfnOutput(this, 'NomeTabelaProdutos', { value: tabelaProdutos.tableName });
   }
 }
