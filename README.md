@@ -4,7 +4,7 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 **🌐 Loja no ar:** https://main.d2g6m9ahoibnw1.amplifyapp.com
 
-> 🚧 **Em construção.** O andamento está no [Roadmap](#roadmap). As instruções de deploy entram aqui quando as etapas correspondentes forem concluídas.
+> ✅ **Etapas obrigatórias concluídas.** O andamento está no [Roadmap](#roadmap), e as instruções para implantar e remover estão em [Como implantar](#como-implantar).
 
 ## Visão geral
 
@@ -17,7 +17,7 @@ Loja de pijamas headless publicada na AWS com back-end serverless orientado a ev
 
 ![Diagrama de arquitetura da Pijamoon na AWS](docs/arquitetura.png)
 
-O desenho mostra a arquitetura completa planejada. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
+O desenho mostra a arquitetura no ar, conferida na Etapa 9. Só o bloco cinza (mensagem com IA) é um extra planejado. O arquivo editável está em [`docs/arquitetura.drawio`](docs/arquitetura.drawio) e abre no [draw.io](https://app.diagrams.net) ou na extensão *Draw.io Integration* do VS Code.
 
 - **Já no ar, na conta do desafio:** site no Amplify Hosting com o disjuntor de custo (veja as [decisões de arquitetura](#decisões-de-arquitetura)), API Gateway com throttling, serviço de catálogo (Lambda + DynamoDB), checkout orientado a eventos (EventBridge, SQS e DLQ), serviço de pedidos integrado ao checkout do site, login com Amazon Cognito, alerta de custo no AWS Budgets e as stacks CDK.
 - **Próximas etapas:** CI/CD.
@@ -263,17 +263,27 @@ O login é um formulário do próprio site que fala direto com o Cognito: a senh
 
 - [x] Fazer o bootstrap e o primeiro deploy na conta AWS do desafio
 - [x] Criar a role de deploy acessada via OIDC (stack `PijamoonCiCd`)
-- [ ] Rodar os testes e o `cdk synth` em todo pull request (workflow `ci.yaml`)
-- [ ] Rodar os testes, o build e o `cdk deploy` a cada merge na `main` (workflow `deploy.yaml`)
+- [x] Rodar os testes e o `cdk synth` em todo pull request (workflow `ci.yaml`)
+- [x] Rodar os testes, o build e o `cdk deploy` a cada merge na `main` (workflow `deploy.yaml`)
+
+**Testado:** no PR #8, o CI passou em 26 s, sem credenciais da AWS. No merge, o deploy passou em 2 min, e o log mostra o login por OIDC (`Assuming role with OIDC`) e as três stacks implantadas.
 
 A role `pijamoon-github-deploy` só pode ser assumida pelo workflow da branch `main` deste repositório (`StringEquals` no `sub` do token, sem curingas) e não tem permissão de administrador: ela só assume as roles criadas pelo `cdk bootstrap`, com credenciais de no máximo 1 hora. O e-mail dos alertas fica num segredo do repositório, para não aparecer nos logs. A stack `PijamoonCiCd` fica fora do deploy automático: é ela que dá ao GitHub o direito de implantar, então só muda à mão.
 
 ### Etapa 9 · Testes de falha e entrega
 
-- [ ] Forçar um erro no processamento de pedidos e ver a mensagem chegar na DLQ
-- [ ] Conferir se o diagrama corresponde à arquitetura entregue
-- [ ] Documentar como implantar e como remover a stack
-- [ ] Conferir se o repositório, a URL e o README estão acessíveis
+- [x] Forçar um erro no processamento de pedidos e ver a mensagem chegar na DLQ
+- [x] Conferir se o diagrama corresponde à arquitetura entregue
+- [x] Documentar como implantar e como remover a stack
+- [x] Conferir se o repositório, a URL e o README estão acessíveis (repositório público, todas as páginas e a API respondendo `200` sem login)
+
+**Teste da DLQ (27/11/2026, na conta do desafio):** um evento `PedidoRecebido` sem número de pedido foi publicado direto no barramento (`aws events put-events`), sem mudar código nenhum. A Lambda de pedidos falhou 3 vezes com a mesma mensagem, com exatamente 60 s entre as tentativas (o *visibility timeout* da fila), e na 3ª falha o SQS moveu a mensagem para a DLQ, com o evento original intacto, cerca de 3 minutos depois da publicação. Os pedidos válidos continuaram sendo processados normalmente.
+
+Depois de corrigir a causa, as mensagens da DLQ voltam para a fila com um comando (*redrive*):
+
+```bash
+aws sqs start-message-move-task --source-arn <ARN da DLQ> --destination-arn <ARN da fila de pedidos> --profile desafio
+```
 
 ### Extras, se houver tempo
 
@@ -286,26 +296,99 @@ A role `pijamoon-github-deploy` só pode ser assumida pelo workflow da branch `m
 
 ```
 site/       front headless: HTML, CSS e TypeScript (compilado com tsc)
-backend/    código das Lambdas
-infra/      AWS CDK em TypeScript: stacks PijamoonStack (back-end),
-            PijamoonSite (hospedagem) e PijamoonCustos (Budgets)
+backend/    código das Lambdas: catalogo, checkout, pedidos-processa,
+            pedidos-consulta e disjuntor
+infra/      AWS CDK em TypeScript, com testes (jest):
+              PijamoonStack   back-end: API, catálogo, checkout, pedidos e Cognito
+              PijamoonSite    hospedagem no Amplify, com o disjuntor de custo
+              PijamoonCustos  alerta de custo no AWS Budgets
+              PijamoonCiCd    role do GitHub Actions via OIDC
 docs/       diagrama de arquitetura (draw.io e PNG)
-.github/    workflow do GitHub Actions
+.github/    workflows: ci.yaml (pull requests) e deploy.yaml (merge na main)
 ```
 
-## Rodando o site localmente
+## Rodando localmente
+
+**Testes** (não precisam de conta AWS):
 
 ```bash
-cd site
-npm ci
-npm run build      # compila site/ts/ para site/js/
+cd site && npm ci && npm run build     # compila site/ts/ para site/js/
+cd ../infra && npm ci && npm test      # testes da infra e das Lambdas
+npx cdk synth                          # gera os templates do CloudFormation
 ```
 
-Depois é só servir a pasta `site/` (por exemplo, com `npx serve site`). As páginas abrem, mas os produtos só carregam quando a API estiver publicada, porque o site busca o catálogo em `/api/products`.
+**Site:** depois do build, dá para servir a pasta `site/` (por exemplo, com `npx serve site`). As páginas abrem, mas o catálogo, o login e o checkout dependem da API e do Cognito publicados: o site chama `/api/*` no próprio domínio, e o `js/config.js` (região e app client do Cognito) só é gerado pelo CDK no deploy.
 
 ## Como implantar
 
-_Será preenchido na Etapa 9._
+O caminho normal é automático: **branch → pull request → merge**. O CI testa o pull request, e o merge na `main` implanta. Os passos abaixo são para montar tudo do zero numa conta AWS nova.
+
+### Pré-requisitos
+
+- Node.js 24, AWS CLI v2 e um perfil da CLI com acesso de administrador à conta (aqui, `desafio`, via IAM Identity Center: `aws sso login --profile desafio`).
+- A região é fixa no código: `us-east-1`.
+
+### 1. Preparar a conta (uma vez)
+
+```bash
+cd infra
+npm ci
+npx cdk bootstrap aws://<ID_DA_CONTA>/us-east-1 --profile desafio
+```
+
+O bootstrap cria o bucket e as roles que o CDK usa para implantar (stack `CDKToolkit`).
+
+### 2. Primeiro deploy, à mão
+
+```bash
+npm --prefix ../site ci
+npm --prefix ../site run build
+npx cdk deploy PijamoonCustos PijamoonStack PijamoonSite --profile desafio -c emailAlertas=<e-mail>
+```
+
+- `PijamoonCustos` primeiro: o alerta de custo começa a vigiar a conta antes de qualquer outro recurso.
+- O e-mail vem por contexto (`-c`) e nunca fica no repositório. Sem ele, a stack de custos não é criada e o disjuntor não manda e-mail.
+- Dois e-mails da AWS chegam para confirmar: o canal de notificações do Budgets e a inscrição no tópico do disjuntor.
+- No fim, a saída `PijamoonSite.UrlLoja` é a URL pública da loja.
+
+### 3. Ligar o deploy automático (uma vez)
+
+```bash
+npx cdk deploy PijamoonCiCd --profile desafio
+```
+
+No repositório do GitHub, em *Settings → Secrets and variables → Actions*, cadastre:
+
+| Nome | Tipo | Valor |
+| --- | --- | --- |
+| `AWS_ROLE_DEPLOY` | variável | a saída `PijamoonCiCd.ArnRoleDeploy` |
+| `EMAIL_ALERTAS` | segredo | o e-mail dos alertas |
+
+Antes de usar em outro repositório, ajuste o `prefixoSub` em `infra/lib/cicd-stack.ts`. Ele é conferido com `gh api repos/<dono>/<repo>/actions/oidc/customization/sub`.
+
+A partir daí, cada merge na `main` roda os testes e implanta `PijamoonStack`, `PijamoonSite` e `PijamoonCustos`. A `PijamoonCiCd` só muda à mão.
+
+### Operação
+
+| Situação | O que fazer |
+| --- | --- |
+| O disjuntor tirou o site do ar | Entender a causa e religar: `aws amplify update-branch --app-id <IdAppAmplify> --branch-name main --no-enable-basic-auth --profile desafio` |
+| Mensagens na DLQ | Ver o motivo no log da Lambda de pedidos, corrigir e devolver para a fila: `aws sqs start-message-move-task --source-arn <ARN da DLQ> --destination-arn <ARN da fila> --profile desafio` |
+| Alerta de custo | Cost Explorer filtrado pela tag `projeto = pijamoon` para achar o serviço. Se preciso, remover a loja (abaixo): o alerta continua ativo |
+| Implantar sem merge | Aba *Actions → Deploy → Run workflow* |
+
+### Como remover tudo
+
+```bash
+cd infra
+npx cdk destroy PijamoonSite PijamoonStack --profile desafio   # a loja
+npx cdk destroy PijamoonCustos --profile desafio               # o alerta de custo
+npx cdk destroy PijamoonCiCd --profile desafio                 # o deploy pelo GitHub
+```
+
+- A ordem importa: a `PijamoonSite` usa a API da `PijamoonStack`, então sai primeiro.
+- Tudo foi configurado para sair junto: tabelas, User Pool, buckets (esvaziados antes) e grupos de logs. Nada fica cobrando depois.
+- A `CDKToolkit` (bootstrap) fica. Para removê-la também, apague a stack no CloudFormation e o bucket `cdk-hnb659fds-assets-*`.
 
 ## Histórico do projeto
 

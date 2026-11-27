@@ -1623,20 +1623,23 @@ body {
   text-underline-offset: 2px;
 }
 
-/* Diagrama BFF (bônus, página /como-fiz) */
+/* Seções da página /como-fiz: arquitetura atual, vídeo e o bônus do app mobile */
 
-.diagrama-bff {
+.diagrama-bff,
+.como-fiz-secao {
   margin-top: 2.5rem;
 }
 
-.diagrama-bff h2 {
+.diagrama-bff h2,
+.como-fiz-secao h2 {
   font-family: var(--fonte-logo);
   font-size: 1.3rem;
   color: var(--cor-texto-forte);
   margin: 0 0 0.6rem;
 }
 
-.diagrama-bff > p {
+.diagrama-bff > p,
+.como-fiz-secao > p {
   max-width: 720px;
   opacity: 0.85;
   line-height: 1.5;
@@ -1663,6 +1666,22 @@ body {
   opacity: 0.65;
   text-align: center;
   margin-top: 0.75rem;
+}
+
+.como-fiz-lista {
+  max-width: 820px;
+  margin: 0 0 1.5rem;
+  padding-left: 1.2rem;
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.como-fiz-lista li + li {
+  margin-top: 0.35rem;
+}
+
+.como-fiz-lista strong {
+  color: var(--cor-texto-forte);
 }
 
 /* Rodapé */
