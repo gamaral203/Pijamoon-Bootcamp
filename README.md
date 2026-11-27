@@ -44,7 +44,7 @@ A conta do projeto tem limite de **US$ 20 por mês**. A arquitetura foi pensada 
 
 - **Só serviços cobrados por uso.** Nada fica ligado cobrando por hora: Lambda, API Gateway, DynamoDB on-demand, EventBridge, SQS, S3 e CloudFront custam centavos com tráfego de demonstração.
 - **Cache sem custo fixo.** O catálogo fica 60 s em cache na memória da Lambda (o DynamoDB nem é consultado) e 60 s no navegador (`Cache-Control`). Um cache dedicado (ElastiCache/Redis) cobraria por hora mesmo parado e exigiria uma VPC com NAT Gateway, o que sozinho passaria do orçamento.
-- **Proteção contra abuso.** A API aceita 5 requisições por segundo em média, com picos de 10. Acima disso, responde `429` sem chamar a Lambda. No pior caso, alguém chamando a API sem parar o mês inteiro, são ~13 milhões de requisições, cerca de US$ 13: abaixo do teto. O limite do API Gateway é aproximado, não exato: num teste com 200 requisições simultâneas, 28 voltaram `429`. Por isso ele trabalha junto com o alerta de custo, e não sozinho.
+- **Proteção contra abuso.** A API aceita 2 requisições por segundo em média, com picos de 10. Acima disso, responde `429` sem chamar a Lambda. O limite do API Gateway é aproximado, não exato: num teste com 200 requisições simultâneas, 28 voltaram `429`. Por isso ele trabalha junto com o alerta de custo, e não sozinho.
 - **Alerta antes de estourar.** Um orçamento no AWS Budgets avisa por e-mail antes de chegar ao limite (detalhes abaixo).
 - **Gasto rastreável.** Todos os recursos levam as tags `projeto`, `desafio` e `gerenciado-por`, para filtrar o custo da Pijamoon no Billing.
 
@@ -69,7 +69,45 @@ A stack `PijamoonCustos` cria o orçamento `pijamoon-limite-mensal` no AWS Budge
 
 Se um alerta chegar, o primeiro passo é ver no Cost Explorer, filtrando pela tag `projeto = pijamoon`, qual serviço está gastando. Se for preciso, a loja sai do ar com `npx cdk destroy PijamoonStack PijamoonSite` e o alerta continua ativo.
 
-A estimativa detalhada entra aqui na Etapa 4.
+### Estimativa mensal
+
+Preços oficiais de us-east-1, consultados na API de preços da AWS (Price List) em novembro de 2026, sem contar o nível gratuito:
+
+| Serviço | Preço |
+| --- | --- |
+| API Gateway (HTTP API) | US$ 1,00 por milhão de requisições |
+| Lambda (ARM) | US$ 0,20 por milhão de invocações + US$ 0,0000133 por GB-segundo |
+| DynamoDB on-demand | US$ 0,125 por milhão de leituras · US$ 0,625 por milhão de gravações |
+| EventBridge | US$ 1,00 por milhão de eventos |
+| SQS | US$ 0,40 por milhão de requisições |
+| CloudWatch Logs | US$ 0,50 por GB gravado |
+| Hospedagem do site (Amplify) | US$ 0,15 por GB entregue |
+| AWS Budgets | os dois primeiros orçamentos são grátis |
+
+**Cenário de demonstração:** 5.000 visitas e 300 pedidos no mês.
+
+| Item | Custo |
+| --- | --- |
+| API Gateway (~5.900 requisições) | US$ 0,006 |
+| Lambda | US$ 0,003 |
+| DynamoDB (com o cache, quase nenhuma leitura) | < US$ 0,001 |
+| EventBridge e SQS | < US$ 0,001 |
+| Logs | US$ 0,001 |
+| Site (~5 GB de páginas e imagens) | US$ 0,73 |
+| **Total** | **≈ US$ 0,74 por mês** |
+
+Quase todo o custo é a entrega das imagens do site. O back-end inteiro custa menos de 2 centavos.
+
+**Pior caso:** alguém chamando a API sem parar, no limite do throttling, o mês inteiro.
+
+| Limite da API | Requisições no mês | API Gateway | Lambda | Logs | Total |
+| --- | --- | --- | --- | --- | --- |
+| 5 por segundo | 13,0 milhões | US$ 12,96 | US$ 3,02 | US$ 2,59 | US$ 18,58 |
+| **2 por segundo (o escolhido)** | 5,2 milhões | US$ 5,18 | US$ 1,21 | US$ 1,04 | **US$ 7,43** |
+
+O limite começou em 5 por segundo e baixou para 2 depois desta conta: US$ 18,58 ficava perto demais do teto, ainda mais com um throttling aproximado. Com 2 por segundo, mesmo um ataque contínuo fica abaixo da metade do limite, e o alerta de 25% (US$ 5) avisa bem antes.
+
+O que não entra na arquitetura por custo fixo: ElastiCache, NAT Gateway e o firewall do Amplify (AWS WAF, US$ 15 por mês).
 
 ## Roadmap
 
@@ -115,7 +153,7 @@ Cada etapa fecha com algo funcionando e testado. A lista mostra o que já foi fe
 - [x] Marcar todos os recursos da stack com tags de custo
 - [x] Configurar o limite de requisições (throttling) na API
 - [x] Guardar o catálogo em cache na memória da Lambda e no navegador
-- [ ] Estimar o custo mensal na AWS Pricing Calculator e documentar aqui
+- [x] Estimar o custo mensal com os preços oficiais e documentar aqui
 
 ### Etapa 5 · Checkout orientado a eventos
 

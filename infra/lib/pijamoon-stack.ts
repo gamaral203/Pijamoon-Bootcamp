@@ -15,13 +15,16 @@ import { apagarLogsNoDestroy } from './regras';
 const RAIZ = path.join(__dirname, '..', '..');
 
 /**
- * Limite da API: 5 requisições por segundo em média, com picos de até 10.
+ * Limite da API: 2 requisições por segundo em média, com picos de até 10.
  * Para uma loja de demonstração, isso sobra (cada página faz uma chamada).
- * E mesmo no pior caso, alguém chamando a API sem parar o mês inteiro,
- * são ~13 milhões de requisições: cerca de US$ 13 de API Gateway, abaixo
- * do teto de US$ 20 (e o cache da Lambda poupa o DynamoDB).
+ *
+ * A conta do pior caso, alguém chamando a API sem parar o mês inteiro:
+ *   2/s × 30 dias ≈ 5,2 milhões de requisições
+ *   API Gateway ≈ US$ 5,18 + Lambda ≈ US$ 1,21 + logs ≈ US$ 1,04 ≈ US$ 7,43
+ * Com 5/s, o mesmo cálculo dava ≈ US$ 18,58: perto demais do teto de US$ 20,
+ * ainda mais porque o throttling do API Gateway é aproximado, não exato.
  */
-export const LIMITE_API = { porSegundo: 5, pico: 10 };
+export const LIMITE_API = { porSegundo: 2, pico: 10 };
 
 /**
  * O back-end da Pijamoon: catálogo (tabela, Lambda e API). Tudo o que esta
