@@ -58,7 +58,15 @@ beforeEach(() => {
       tabela.set(k, c.Item);
       return {};
     }
-    // update do contador: ADD total, com a condição do limite
+    // O DynamoDB de verdade recusa palavra reservada solta numa expressão
+    // (foi o bug do primeiro deploy). O falso passa a recusar também.
+    const expressoes = [c.UpdateExpression, c.ConditionExpression].join(' ');
+    for (const reservada of ['total', 'status', 'name', 'data', 'count']) {
+      if (new RegExp(`(^|[^#:\\w])${reservada}\\b`).test(expressoes)) {
+        throw new Error(`Invalid expression: reserved keyword: ${reservada}`);
+      }
+    }
+    // update do contador: ADD #total, com a condição do limite
     const atual = tabela.get(k)?.total ?? 0;
     if (atual >= c.ExpressionAttributeValues[':limite']) throw new ConditionalCheckFailedException('limite');
     tabela.set(k, { total: atual + 1 });
